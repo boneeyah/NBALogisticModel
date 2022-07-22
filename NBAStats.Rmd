@@ -14,10 +14,28 @@ library(tidyverse)
 library(GGally)
 ```
 
-##load data
-will clean to remove opposing teams stats since they're actually including from the other team's perspective (tor vs atl, atl vs tor)
-also dropping date since game number is more useful as a measure of the point in the season the game took place
+## load data
+will clean and remove opposing team stats, since they're included as the primary on the mirror matchup (i.e. Atl-Tor, vs Tor-Atl)
+also removing date, since Game is a better metric of when a game takes place in relation to the point of the season
 
+### Variable Descriptions
+* PTS - Team Points Scored
+* FG - Field Goals Made
+* FGA - Field Goals Attempted
+* FG% - Field Goal Percentage
+* 3P - Three Points Made
+* 3PA - Three Points Attempted
+* 3P% - Three Point Percentage
+* FT - Free Throws Made
+* FTA - Free Throws Attempted
+* FT% - Free Throw Percentage
+* ORB - Offensive Rebounds
+* TRB - Total Rebounds
+* AST - Assists
+* STL - Steals
+* BLK - Blocks
+* TOV - Turnovers
+* PF - Fouls
 
 ```{r}
 rawdata <- read.csv("https://raw.githubusercontent.com/boneeyah/GroupProject2/main/DataFile/nba.games.stats.csv")
