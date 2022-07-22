@@ -1,7 +1,7 @@
 # NBA Stats
 MSDS 6372 Project 2
 
-## Team Members![Github](https://img.shields.io/badge/Contributors-3-brightgreen)
+## Team Members ![Github](https://img.shields.io/badge/Contributors-3-brightgreen)
 Miguel Bonilla | Milan Patel | Jordan Eaddy
 
 ## Contents
