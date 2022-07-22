@@ -2,7 +2,9 @@
 title: "GroupProject2"
 author: "Miguel Bonilla, Jordan Eaddy, Milan Patel"
 date: "7/21/2022"
-output: html_document
+output:
+  md_document:
+    variant: markdown_github
 ---
 
 ```{r setup, include=FALSE}
@@ -12,6 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(tidyverse)
 library(GGally)
+library(MASS)
 ```
 
 ## load data
@@ -64,13 +67,13 @@ also for team points, field goals, field goal %, 3 point shots and 3 point shot 
 to a lesser extent, total rebounds, assists, and turnovers
 ```{r}
 plot(WINorLOSS~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
-plot(PTS~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
-plot(`FG%`~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
-plot(FG~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
-plot(`3PA`~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
-plot(`3P%`~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
-plot(TRB~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
-plot(AST~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(PTS~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(`FG%`~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(FG~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(`3PA`~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(`3P%`~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(TRB~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(AST~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
 ```
 ##correlation plot
 build a heatmap to check for correlation between explanatory variables
@@ -102,5 +105,29 @@ fit.pred <- factor(fit.pred, levels = c("W","L"))
 test$WINorLOSS <- factor(test$WINorLOSS, levels = c("W", "L"))
 
 caret::confusionMatrix(data =fit.pred, reference = test$WINorLOSS)
+```
+now adding feature selection to see if the model can improve with the table in it's present format
+```{r}
+full.mod <- glm(WINorLOSS~.,family = "binomial", data=cleandata)
+step.mod <- full.mod %>% stepAIC(trace = FALSE)
+summary(step.mod)
+
+full.pred <- predict(step.mod, newdata = test, type = "response")
+full.pred <- ifelse(full.pred>.5, "W", "L")
+full.pred <- factor(full.pred, levels = c("W","L"))
+
+caret::confusionMatrix(data = full.pred, reference = test$WINorLOSS)
+```
+The variable Game, probably does not make sense in the context of our dataset without an interaction. Since for any given game there are exactly the same number of wins and losses (each match has one winner and one loser).
+We will therefore fit a new model without Game for our no interaction model, keeping in mind that there might be potential interactions between Game and other variables which might make for a better more complex model in Objective 2
+
+```{r}
+simple.mod <- glm(WINorLOSS~Game + Home + PTS + FG + `FG%` + `3P%` + FTA + `FT%` + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = train)
+
+simple.pred <- predict(simple.mod, newdata = test, type = "response")
+simple.pred <- ifelse(simple.pred>.5, "W", "L")
+simple.pred <- factor(simple.pred, levels = c("W","L"))
+
+caret::confusionMatrix(simple.pred, test$WINorLOSS)
 ```
 

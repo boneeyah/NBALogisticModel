@@ -21,6 +21,17 @@ library(GGally)
     ##   method from   
     ##   +.gg   ggplot2
 
+``` r
+library(MASS)
+```
+
+    ## 
+    ## Attaching package: 'MASS'
+
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     select
+
 ## load data
 
 will clean and remove opposing team stats, since they’re included as the
@@ -134,43 +145,43 @@ plot(WINorLOSS~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
 ![](NBAStats_files/figure-markdown_github/unnamed-chunk-3-1.png)
 
 ``` r
-plot(PTS~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(PTS~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
 ```
 
 ![](NBAStats_files/figure-markdown_github/unnamed-chunk-3-2.png)
 
 ``` r
-plot(`FG%`~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(`FG%`~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
 ```
 
 ![](NBAStats_files/figure-markdown_github/unnamed-chunk-3-3.png)
 
 ``` r
-plot(FG~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(FG~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
 ```
 
 ![](NBAStats_files/figure-markdown_github/unnamed-chunk-3-4.png)
 
 ``` r
-plot(`3PA`~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(`3PA`~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
 ```
 
 ![](NBAStats_files/figure-markdown_github/unnamed-chunk-3-5.png)
 
 ``` r
-plot(`3P%`~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(`3P%`~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
 ```
 
 ![](NBAStats_files/figure-markdown_github/unnamed-chunk-3-6.png)
 
 ``` r
-plot(TRB~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(TRB~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
 ```
 
 ![](NBAStats_files/figure-markdown_github/unnamed-chunk-3-7.png)
 
 ``` r
-plot(AST~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(AST~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
 ```
 
 ![](NBAStats_files/figure-markdown_github/unnamed-chunk-3-8.png)
@@ -248,6 +259,135 @@ caret::confusionMatrix(data =fit.pred, reference = test$WINorLOSS)
     ##          Detection Rate : 0.3816          
     ##    Detection Prevalence : 0.4898          
     ##       Balanced Accuracy : 0.7714          
+    ##                                           
+    ##        'Positive' Class : W               
+    ## 
+
+now adding feature selection to see if the model can improve with the
+table in it’s present format
+
+``` r
+full.mod <- glm(WINorLOSS~.,family = "binomial", data=cleandata)
+step.mod <- full.mod %>% stepAIC(trace = FALSE)
+summary(step.mod)
+```
+
+    ## 
+    ## Call:
+    ## glm(formula = WINorLOSS ~ Game + Home + PTS + FGA + `FG%` + `3P%` + 
+    ##     FTA + `FT%` + TRB + AST + STL + BLK + TOV + PF, family = "binomial", 
+    ##     data = cleandata)
+    ## 
+    ## Deviance Residuals: 
+    ##     Min       1Q   Median       3Q      Max  
+    ## -3.0387  -0.4800  -0.0019   0.4511   3.3286  
+    ## 
+    ## Coefficients:
+    ##               Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept) -10.136481   1.312057  -7.726 1.11e-14 ***
+    ## Game         -0.009358   0.001336  -7.005 2.46e-12 ***
+    ## HomeHome      0.376439   0.062333   6.039 1.55e-09 ***
+    ## PTS           0.128024   0.011902  10.757  < 2e-16 ***
+    ## FGA          -0.282979   0.013809 -20.493  < 2e-16 ***
+    ## `FG%`        13.032984   2.012702   6.475 9.46e-11 ***
+    ## `3P%`         2.735630   0.478129   5.722 1.06e-08 ***
+    ## FTA          -0.070524   0.010077  -6.998 2.59e-12 ***
+    ## `FT%`         1.951904   0.390061   5.004 5.61e-07 ***
+    ## TRB           0.367789   0.008985  40.934  < 2e-16 ***
+    ## AST           0.027277   0.008306   3.284  0.00102 ** 
+    ## STL           0.398507   0.013329  29.898  < 2e-16 ***
+    ## BLK           0.122687   0.012678   9.677  < 2e-16 ***
+    ## TOV          -0.341337   0.011094 -30.767  < 2e-16 ***
+    ## PF           -0.064846   0.007870  -8.240  < 2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## (Dispersion parameter for binomial family taken to be 1)
+    ## 
+    ##     Null deviance: 13641.1  on 9839  degrees of freedom
+    ## Residual deviance:  6647.9  on 9825  degrees of freedom
+    ## AIC: 6677.9
+    ## 
+    ## Number of Fisher Scoring iterations: 6
+
+``` r
+full.pred <- predict(step.mod, newdata = test, type = "response")
+full.pred <- ifelse(full.pred>.5, "W", "L")
+full.pred <- factor(full.pred, levels = c("W","L"))
+
+caret::confusionMatrix(data = full.pred, reference = test$WINorLOSS)
+```
+
+    ## Confusion Matrix and Statistics
+    ## 
+    ##           Reference
+    ## Prediction   W   L
+    ##          W 837 135
+    ##          L 151 845
+    ##                                         
+    ##                Accuracy : 0.8547        
+    ##                  95% CI : (0.8383, 0.87)
+    ##     No Information Rate : 0.502         
+    ##     P-Value [Acc > NIR] : <2e-16        
+    ##                                         
+    ##                   Kappa : 0.7094        
+    ##                                         
+    ##  Mcnemar's Test P-Value : 0.3751        
+    ##                                         
+    ##             Sensitivity : 0.8472        
+    ##             Specificity : 0.8622        
+    ##          Pos Pred Value : 0.8611        
+    ##          Neg Pred Value : 0.8484        
+    ##              Prevalence : 0.5020        
+    ##          Detection Rate : 0.4253        
+    ##    Detection Prevalence : 0.4939        
+    ##       Balanced Accuracy : 0.8547        
+    ##                                         
+    ##        'Positive' Class : W             
+    ## 
+
+The variable Game, probably does not make sense in the context of our
+dataset without an interaction. Since for any given game there are
+exactly the same number of wins and losses (each match has one winner
+and one loser). We will therefore fit a new model without Game for our
+no interaction model, keeping in mind that there might be potential
+interactions between Game and other variables which might make for a
+better more complex model in Objective 2
+
+``` r
+simple.mod <- glm(WINorLOSS~Game + Home + PTS + FG + `FG%` + `3P%` + FTA + `FT%` + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = train)
+
+simple.pred <- predict(simple.mod, newdata = test, type = "response")
+simple.pred <- ifelse(simple.pred>.5, "W", "L")
+simple.pred <- factor(simple.pred, levels = c("W","L"))
+
+caret::confusionMatrix(simple.pred, test$WINorLOSS)
+```
+
+    ## Confusion Matrix and Statistics
+    ## 
+    ##           Reference
+    ## Prediction   W   L
+    ##          W 825 138
+    ##          L 163 842
+    ##                                           
+    ##                Accuracy : 0.8471          
+    ##                  95% CI : (0.8304, 0.8627)
+    ##     No Information Rate : 0.502           
+    ##     P-Value [Acc > NIR] : <2e-16          
+    ##                                           
+    ##                   Kappa : 0.6941          
+    ##                                           
+    ##  Mcnemar's Test P-Value : 0.1666          
+    ##                                           
+    ##             Sensitivity : 0.8350          
+    ##             Specificity : 0.8592          
+    ##          Pos Pred Value : 0.8567          
+    ##          Neg Pred Value : 0.8378          
+    ##              Prevalence : 0.5020          
+    ##          Detection Rate : 0.4192          
+    ##    Detection Prevalence : 0.4893          
+    ##       Balanced Accuracy : 0.8471          
     ##                                           
     ##        'Positive' Class : W               
     ## 
