@@ -98,11 +98,13 @@ test <- cleandata[-index,]
 
 simple.mod <- glm(WINorLOSS~ Home + PTS + `FG%` + TRB, family = "binomial", data=train)
 coef(simple.mod)
+summary(simple.mod)
 
 fit.pred <- predict(simple.mod, newdata = test, type = "response")
 fit.pred <- ifelse(fit.pred > .5, "W", "L")
 fit.pred <- factor(fit.pred, levels = c("W","L"))
 test$WINorLOSS <- factor(test$WINorLOSS, levels = c("W", "L"))
+
 
 caret::confusionMatrix(data =fit.pred, reference = test$WINorLOSS)
 ```
@@ -123,6 +125,7 @@ We will therefore fit a new model without Game for our no interaction model, kee
 
 ```{r}
 simple.mod <- glm(WINorLOSS~Game + Home + PTS + FG + `FG%` + `3P%` + FTA + `FT%` + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = train)
+summary(full.mod)
 
 simple.pred <- predict(simple.mod, newdata = test, type = "response")
 simple.pred <- ifelse(simple.pred>.5, "W", "L")
