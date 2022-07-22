@@ -32,9 +32,11 @@ cleandata %>% count(WINorLOSS) %>% ggplot(aes(x=WINorLOSS, y= n, fill = WINorLOS
 cleandata$WINorLOSS <- as.factor(cleandata$WINorLOSS)
 cleandata$Home <- as.factor(cleandata$Home)
 
+##change variable names
+cleandata <- rename(cleandata, c("PTS" = TeamPoints, "FG"=FieldGoals,"FGA"=FieldGoalsAttempted, "FG%"=FieldGoals., "3PA"=X3PointShotsAttempted, "3P" = X3PointShots, "3P%"=X3PointShots.,"FT"=FreeThrows, "FTA"=FreeThrowsAttempted, "FT%"=FreeThrows.,"ORB"=OffRebounds,"TRB"=TotalRebounds, "AST"=Assists, "STL"=Steals,"BLK"=Blocks,"TOV"=Turnovers, "PF"=TotalFouls))
+
 sapply(cleandata, function(x) sum(is.na(x))) #no NAs present
 
-attach(cleandata)
 ggpairs(cleandata, columns = 2:10, aes(color = WINorLOSS))
 ggpairs(cleandata, columns = 11:20, aes(color = WINorLOSS))
 
@@ -43,14 +45,25 @@ There is a separation between home and away
 also for team points, field goals, field goal %, 3 point shots and 3 point shot %
 to a lesser extent, total rebounds, assists, and turnovers
 ```{r}
-plot(WINorLOSS~Home, col = c("#F8766D","#00bfc4"))
-plot(TeamPoints~Home, col = c("#F8766D","#00bfc4"))
-plot(FieldGoals.~Home, col = c("#F8766D","#00bfc4"))
-plot(FieldGoals~Home, col = c("#F8766D","#00bfc4"))
-plot(X3PointShots~Home, col = c("#F8766D","#00bfc4"))
-plot(X3PointShots.~Home, col = c("#F8766D","#00bfc4"))
-plot(TotalRebounds~Home, col = c("#F8766D","#00bfc4"))
-plot(Assists~Home, col = c("#F8766D","#00bfc4"))
+plot(WINorLOSS~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(PTS~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(`FG%`~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(FG~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(`3PA`~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(`3P%`~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(TRB~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
+plot(AST~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
+```
+##correlation plot
+build a heatmap to check for correlation between explanatory variables
+```{r}
+library(lattice)
+library(reshape2)
+library(ggthemes)
+cleandata.corr <- round(cor(cleandata[,c(2,4:20)]),2)
+cleandata.corr <- melt(cleandata.corr)
+
+cleandata.corr %>% ggplot(aes(x=Var1, y=Var2, fill=value))+geom_tile()+scale_fill_viridis_c()+theme(axis.title.x = element_blank(),axis.title.y = element_blank())
 ```
 
 ```{r}
@@ -62,7 +75,7 @@ train <- cleandata[index,]
 test <- cleandata[-index,]
 
 
-simple.mod <- glm(WINorLOSS~ Home + TeamPoints + FieldGoals. + TotalRebounds, family = "binomial", data=train)
+simple.mod <- glm(WINorLOSS~ Home + PTS + `FG%` + TRB, family = "binomial", data=train)
 coef(simple.mod)
 
 fit.pred <- predict(simple.mod, newdata = test, type = "response")
