@@ -114,8 +114,9 @@ cm.simple <- confusionMatrix(data =simple.pred, reference = test$WINorLOSS)
 ```
 now adding feature selection to see if the model can improve with the table in it's present format
 ```{r}
-full.mod <- glm(WINorLOSS~.,family = "binomial", data=cleandata)
-step.mod <- full.mod %>% stepAIC(trace = FALSE)
+empty.mod <- glm(WINorLOSS~ 1,family = "binomial", data = cleandata) #as a starting point for forward and stepwise selection
+full.mod <- glm(WINorLOSS~.,family = "binomial", data=cleandata) #starting point for backward selection
+step.mod <- empty.mod %>% stepAIC(direction = "both", scope = list(lower = empty.mod, upper=~Game + Home + PTS + FG + FGA + `FG%` + `3P` + `3PA` + `3P%` + FT + FTA + `FT%` + ORB + TRB + AST + STL + BLK + TOV + PF),trace = FALSE)
 summary(step.mod)
 
 step.pred <- predict(step.mod, newdata = test, type = "response")
@@ -123,7 +124,22 @@ step.pred <- ifelse(step.pred>.5, "W", "L")
 step.pred <- factor(step.pred, levels = c("W","L"))
 
 cm.step <- confusionMatrix(data = step.pred, reference = test$WINorLOSS)
-cm.step
+
+fwd.mod <- empty.mod %>% stepAIC(direction = "forward", scope = list(lower = empty.mod, upper=~Game + Home + PTS + FG + FGA + `FG%` + `3P` + `3PA` + `3P%` + FT + FTA + `FT%` + ORB + TRB + AST + STL + BLK + TOV + PF),trace = FALSE)
+summary(fwd.mod)
+fwd.pred <- predict(fwd.mod, newdata = test, type = "response")
+fwd.pred <- ifelse(fwd.pred>.5, "W", "L")
+fwd.pred <- factor(fwd.pred, levels = c("W","L"))
+
+cm.fwd <- confusionMatrix(data = fwd.pred, reference = test$WINorLOSS)
+
+bkw.mod <- full.mod %>% stepAIC(direction = "backward", trace = FALSE)
+summary(bkw.mod)
+bkw.pred <- predict(bkw.mod, newdata = test, type = "response")
+bkw.pred <- ifelse(bkw.pred>.5, "W", "L")
+bkw.pred <- factor(bkw.pred, levels = c("W","L"))
+
+cm.bkw <- confusionMatrix(data = bkw.pred, reference = test$WINorLOSS)
 ```
 The variable Game, probably does not make sense in the context of our dataset without an interaction. Since for any given game there are exactly the same number of wins and losses (each match has one winner and one loser).
 We will therefore fit a new model without Game for our no interaction model, keeping in mind that there might be potential interactions between Game and other variables which might make for a better more complex model in Objective 2
@@ -164,10 +180,10 @@ cm.lasso
 ```
 Create a table with the results from all the confusion Matrix models
 ```{r}
-cm.df <- data.frame("Model" = c("Simple", "Stepwise", "Reduced", "LASSO"),
-           "Accuracy"= c(cm.simple$overall[1], cm.step$overall[1], cm.reduced$overall[1],cm.lasso$overall[1]),
-           "Sensitivity"=c(cm.simple$byClass[1], cm.step$byClass[1],cm.reduced$byClass[1], cm.lasso$byClass[1]),
-           "Specificty" = c(cm.simple$byClass[2], cm.step$byClass[2], cm.reduced$byClass[2], cm.lasso$byClass[2]))
+cm.df <- data.frame("Model" = c("Simple", "Forward", "Stepwise", "Backward", "Reduced", "LASSO"),
+           "Accuracy"= c(cm.simple$overall[1],cm.fwd$overall[1], cm.step$overall[1],cm.bkw$overall[1], cm.reduced$overall[1],cm.lasso$overall[1]),
+           "Sensitivity"=c(cm.simple$byClass[1],cm.fwd$byClass[1], cm.step$byClass[1], cm.bkw$byClass[1], cm.reduced$byClass[1], cm.lasso$byClass[1]),
+           "Specificty" = c(cm.simple$byClass[2],cm.fwd$byClass[2], cm.step$byClass[2],cm.bkw$byClass[2], cm.reduced$byClass[2], cm.lasso$byClass[2]))
 cm.df <- kable(cm.df, format = "html") %>% kable_styling(latex_options = c("striped", "scale_down"), full_width = FALSE) %>% 
   row_spec(row = 0, italic = T, background = "#21918c", color = "white") %>% 
   column_spec(1:2, width = "0.5in")

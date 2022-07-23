@@ -2,16 +2,16 @@
 library(tidyverse)
 ```
 
-    ## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
+    ## -- Attaching packages --------------------------------------- tidyverse 1.3.1 --
 
-    ## ✔ ggplot2 3.3.5     ✔ purrr   0.3.4
-    ## ✔ tibble  3.1.6     ✔ dplyr   1.0.7
-    ## ✔ tidyr   1.1.4     ✔ stringr 1.4.0
-    ## ✔ readr   2.1.1     ✔ forcats 0.5.1
+    ## v ggplot2 3.3.5     v purrr   0.3.4
+    ## v tibble  3.1.6     v dplyr   1.0.8
+    ## v tidyr   1.2.0     v stringr 1.4.0
+    ## v readr   2.1.2     v forcats 0.5.1
 
-    ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-    ## ✖ dplyr::filter() masks stats::filter()
-    ## ✖ dplyr::lag()    masks stats::lag()
+    ## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
+    ## x dplyr::filter() masks stats::filter()
+    ## x dplyr::lag()    masks stats::lag()
 
 ``` r
 library(GGally)
@@ -36,6 +36,8 @@ library(MASS)
 library(caret)
 ```
 
+    ## Warning: package 'caret' was built under R version 4.1.3
+
     ## Loading required package: lattice
 
     ## 
@@ -48,6 +50,8 @@ library(caret)
 ``` r
 library(glmnet)
 ```
+
+    ## Warning: package 'glmnet' was built under R version 4.1.3
 
     ## Loading required package: Matrix
 
@@ -247,11 +251,13 @@ cleandata.corr <- melt(cleandata.corr)
 cleandata.corr %>% ggplot(aes(x=Var1, y=Var2, fill=value))+geom_tile()+scale_fill_viridis_c()+theme(axis.title.x = element_blank(),axis.title.y = element_blank())
 ```
 
-![](NBAStats_files/figure-markdown_github/unnamed-chunk-4-1.png)
+![](NBAStats_files/figure-markdown_github/unnamed-chunk-4-1.png) Not
+surprisingly, points and field goals, free throw attempts and free
+throws seem to have a strong correlation
 
 ``` r
 #set seed
-set.seed(1726)#8721
+set.seed(721)
 ##80-20 split of data
 index <- sample(nrow(cleandata), round(.8*nrow(cleandata)))
 train <- cleandata[index,]
@@ -263,7 +269,7 @@ coef(simple.mod)
 ```
 
     ##  (Intercept)     HomeHome          PTS        `FG%`          TRB 
-    ## -21.58434006   0.52997432   0.03180096  24.49187691   0.15724328
+    ## -21.57151166   0.50304029   0.03353574  23.98643448   0.15890982
 
 ``` r
 summary(simple.mod)
@@ -275,24 +281,24 @@ summary(simple.mod)
     ##     data = train)
     ## 
     ## Deviance Residuals: 
-    ##     Min       1Q   Median       3Q      Max  
-    ## -3.0782  -0.7748  -0.1478   0.7786   2.8805  
+    ##      Min        1Q    Median        3Q       Max  
+    ## -3.06051  -0.76877  -0.07536   0.77005   2.75360  
     ## 
     ## Coefficients:
     ##               Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept) -21.584340   0.510053 -42.318   <2e-16 ***
-    ## HomeHome      0.529974   0.056683   9.350   <2e-16 ***
-    ## PTS           0.031801   0.003536   8.995   <2e-16 ***
-    ## `FG%`        24.491877   0.906396  27.021   <2e-16 ***
-    ## TRB           0.157243   0.005563  28.265   <2e-16 ***
+    ## (Intercept) -21.571512   0.508665 -42.408   <2e-16 ***
+    ## HomeHome      0.503040   0.056741   8.866   <2e-16 ***
+    ## PTS           0.033536   0.003608   9.295   <2e-16 ***
+    ## `FG%`        23.986434   0.910402  26.347   <2e-16 ***
+    ## TRB           0.158910   0.005561  28.578   <2e-16 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## (Dispersion parameter for binomial family taken to be 1)
     ## 
-    ##     Null deviance: 10911.5  on 7871  degrees of freedom
-    ## Residual deviance:  7568.2  on 7867  degrees of freedom
-    ## AIC: 7578.2
+    ##     Null deviance: 10912.9  on 7871  degrees of freedom
+    ## Residual deviance:  7553.5  on 7867  degrees of freedom
+    ## AIC: 7563.5
     ## 
     ## Number of Fisher Scoring iterations: 5
 
@@ -310,9 +316,108 @@ now adding feature selection to see if the model can improve with the
 table in it’s present format
 
 ``` r
-full.mod <- glm(WINorLOSS~.,family = "binomial", data=cleandata)
-step.mod <- full.mod %>% stepAIC(trace = FALSE)
+empty.mod <- glm(WINorLOSS~ 1,family = "binomial", data = cleandata) #as a starting point for forward and stepwise selection
+full.mod <- glm(WINorLOSS~.,family = "binomial", data=cleandata) #starting point for backward selection
+step.mod <- empty.mod %>% stepAIC(direction = "both", scope = list(lower = empty.mod, upper=~Game + Home + PTS + FG + FGA + `FG%` + `3P` + `3PA` + `3P%` + FT + FTA + `FT%` + ORB + TRB + AST + STL + BLK + TOV + PF),trace = FALSE)
 summary(step.mod)
+```
+
+    ## 
+    ## Call:
+    ## glm(formula = WINorLOSS ~ PTS + TRB + FGA + TOV + STL + FTA + 
+    ##     BLK + PF + Game + Home + `3PA` + AST + `3P%` + ORB, family = "binomial", 
+    ##     data = cleandata)
+    ## 
+    ## Deviance Residuals: 
+    ##     Min       1Q   Median       3Q      Max  
+    ## -3.0445  -0.4796  -0.0023   0.4524   3.3740  
+    ## 
+    ## Coefficients:
+    ##              Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept) -2.486978   0.538353  -4.620 3.84e-06 ***
+    ## PTS          0.203043   0.005728  35.449  < 2e-16 ***
+    ## TRB          0.371185   0.009284  39.983  < 2e-16 ***
+    ## FGA         -0.346031   0.009552 -36.227  < 2e-16 ***
+    ## TOV         -0.338836   0.011161 -30.358  < 2e-16 ***
+    ## STL          0.399321   0.013330  29.957  < 2e-16 ***
+    ## FTA         -0.126641   0.006295 -20.116  < 2e-16 ***
+    ## BLK          0.121851   0.012705   9.591  < 2e-16 ***
+    ## PF          -0.064956   0.007867  -8.256  < 2e-16 ***
+    ## Game        -0.009265   0.001335  -6.940 3.93e-12 ***
+    ## HomeHome     0.382336   0.062336   6.133 8.60e-10 ***
+    ## `3PA`       -0.029297   0.004697  -6.237 4.46e-10 ***
+    ## AST          0.025731   0.008230   3.127  0.00177 ** 
+    ## `3P%`        1.067657   0.410689   2.600  0.00933 ** 
+    ## ORB         -0.017356   0.011318  -1.533  0.12518    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## (Dispersion parameter for binomial family taken to be 1)
+    ## 
+    ##     Null deviance: 13641.1  on 9839  degrees of freedom
+    ## Residual deviance:  6652.4  on 9825  degrees of freedom
+    ## AIC: 6682.4
+    ## 
+    ## Number of Fisher Scoring iterations: 6
+
+``` r
+step.pred <- predict(step.mod, newdata = test, type = "response")
+step.pred <- ifelse(step.pred>.5, "W", "L")
+step.pred <- factor(step.pred, levels = c("W","L"))
+
+cm.step <- confusionMatrix(data = step.pred, reference = test$WINorLOSS)
+
+fwd.mod <- empty.mod %>% stepAIC(direction = "forward", scope = list(lower = empty.mod, upper=~Game + Home + PTS + FG + FGA + `FG%` + `3P` + `3PA` + `3P%` + FT + FTA + `FT%` + ORB + TRB + AST + STL + BLK + TOV + PF),trace = FALSE)
+summary(fwd.mod)
+```
+
+    ## 
+    ## Call:
+    ## glm(formula = WINorLOSS ~ PTS + TRB + FGA + TOV + STL + FTA + 
+    ##     BLK + PF + Game + Home + `3PA` + AST + `3P%` + ORB, family = "binomial", 
+    ##     data = cleandata)
+    ## 
+    ## Deviance Residuals: 
+    ##     Min       1Q   Median       3Q      Max  
+    ## -3.0445  -0.4796  -0.0023   0.4524   3.3740  
+    ## 
+    ## Coefficients:
+    ##              Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept) -2.486978   0.538353  -4.620 3.84e-06 ***
+    ## PTS          0.203043   0.005728  35.449  < 2e-16 ***
+    ## TRB          0.371185   0.009284  39.983  < 2e-16 ***
+    ## FGA         -0.346031   0.009552 -36.227  < 2e-16 ***
+    ## TOV         -0.338836   0.011161 -30.358  < 2e-16 ***
+    ## STL          0.399321   0.013330  29.957  < 2e-16 ***
+    ## FTA         -0.126641   0.006295 -20.116  < 2e-16 ***
+    ## BLK          0.121851   0.012705   9.591  < 2e-16 ***
+    ## PF          -0.064956   0.007867  -8.256  < 2e-16 ***
+    ## Game        -0.009265   0.001335  -6.940 3.93e-12 ***
+    ## HomeHome     0.382336   0.062336   6.133 8.60e-10 ***
+    ## `3PA`       -0.029297   0.004697  -6.237 4.46e-10 ***
+    ## AST          0.025731   0.008230   3.127  0.00177 ** 
+    ## `3P%`        1.067657   0.410689   2.600  0.00933 ** 
+    ## ORB         -0.017356   0.011318  -1.533  0.12518    
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## (Dispersion parameter for binomial family taken to be 1)
+    ## 
+    ##     Null deviance: 13641.1  on 9839  degrees of freedom
+    ## Residual deviance:  6652.4  on 9825  degrees of freedom
+    ## AIC: 6682.4
+    ## 
+    ## Number of Fisher Scoring iterations: 6
+
+``` r
+fwd.pred <- predict(fwd.mod, newdata = test, type = "response")
+fwd.pred <- ifelse(fwd.pred>.5, "W", "L")
+fwd.pred <- factor(fwd.pred, levels = c("W","L"))
+
+cm.fwd <- confusionMatrix(data = fwd.pred, reference = test$WINorLOSS)
+
+bkw.mod <- full.mod %>% stepAIC(direction = "backward", trace = FALSE)
+summary(bkw.mod)
 ```
 
     ## 
@@ -354,41 +459,12 @@ summary(step.mod)
     ## Number of Fisher Scoring iterations: 6
 
 ``` r
-step.pred <- predict(step.mod, newdata = test, type = "response")
-step.pred <- ifelse(step.pred>.5, "W", "L")
-step.pred <- factor(step.pred, levels = c("W","L"))
+bkw.pred <- predict(bkw.mod, newdata = test, type = "response")
+bkw.pred <- ifelse(bkw.pred>.5, "W", "L")
+bkw.pred <- factor(bkw.pred, levels = c("W","L"))
 
-cm.step <- confusionMatrix(data = step.pred, reference = test$WINorLOSS)
-cm.step
+cm.bkw <- confusionMatrix(data = bkw.pred, reference = test$WINorLOSS)
 ```
-
-    ## Confusion Matrix and Statistics
-    ## 
-    ##           Reference
-    ## Prediction   W   L
-    ##          W 881 139
-    ##          L 155 793
-    ##                                           
-    ##                Accuracy : 0.8506          
-    ##                  95% CI : (0.8341, 0.8661)
-    ##     No Information Rate : 0.5264          
-    ##     P-Value [Acc > NIR] : <2e-16          
-    ##                                           
-    ##                   Kappa : 0.7006          
-    ##                                           
-    ##  Mcnemar's Test P-Value : 0.3817          
-    ##                                           
-    ##             Sensitivity : 0.8504          
-    ##             Specificity : 0.8509          
-    ##          Pos Pred Value : 0.8637          
-    ##          Neg Pred Value : 0.8365          
-    ##              Prevalence : 0.5264          
-    ##          Detection Rate : 0.4477          
-    ##    Detection Prevalence : 0.5183          
-    ##       Balanced Accuracy : 0.8506          
-    ##                                           
-    ##        'Positive' Class : W               
-    ## 
 
 The variable Game, probably does not make sense in the context of our
 dataset without an interaction. Since for any given game there are
@@ -411,32 +487,32 @@ summary(reduced.mod)
     ## 
     ## Deviance Residuals: 
     ##     Min       1Q   Median       3Q      Max  
-    ## -2.9624  -0.4919  -0.0344   0.4492   3.3016  
+    ## -2.9226  -0.4881  -0.0086   0.4574   3.4114  
     ## 
     ## Coefficients:
     ##               Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept) -11.693728   1.467159  -7.970 1.58e-15 ***
-    ## HomeHome      0.444503   0.069541   6.392 1.64e-10 ***
-    ## PTS           0.116255   0.013254   8.771  < 2e-16 ***
-    ## FGA          -0.266739   0.015267 -17.472  < 2e-16 ***
-    ## `FG%`        14.578815   2.246414   6.490 8.59e-11 ***
-    ## `3P%`         3.389475   0.539014   6.288 3.21e-10 ***
-    ## FTA          -0.061500   0.011246  -5.469 4.53e-08 ***
-    ## `FT%`         2.040862   0.440041   4.638 3.52e-06 ***
-    ## TRB           0.356585   0.009847  36.213  < 2e-16 ***
-    ## AST           0.030257   0.009174   3.298 0.000973 ***
-    ## STL           0.392792   0.014793  26.552  < 2e-16 ***
-    ## BLK           0.126235   0.014095   8.956  < 2e-16 ***
-    ## TOV          -0.331862   0.012265 -27.058  < 2e-16 ***
-    ## PF           -0.061544   0.008687  -7.085 1.39e-12 ***
+    ## (Intercept) -11.007736   1.476679  -7.454 9.03e-14 ***
+    ## HomeHome      0.372618   0.069560   5.357 8.47e-08 ***
+    ## PTS           0.122723   0.013251   9.261  < 2e-16 ***
+    ## FGA          -0.274253   0.015417 -17.789  < 2e-16 ***
+    ## `FG%`        13.682133   2.258386   6.058 1.38e-09 ***
+    ## `3P%`         2.738277   0.538583   5.084 3.69e-07 ***
+    ## FTA          -0.062716   0.011220  -5.590 2.28e-08 ***
+    ## `FT%`         2.209522   0.435828   5.070 3.98e-07 ***
+    ## TRB           0.359609   0.009844  36.530  < 2e-16 ***
+    ## AST           0.027514   0.009263   2.970  0.00298 ** 
+    ## STL           0.389992   0.014735  26.467  < 2e-16 ***
+    ## BLK           0.109141   0.013970   7.812 5.61e-15 ***
+    ## TOV          -0.335648   0.012278 -27.338  < 2e-16 ***
+    ## PF           -0.063843   0.008794  -7.260 3.87e-13 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## (Dispersion parameter for binomial family taken to be 1)
     ## 
-    ##     Null deviance: 10911.5  on 7871  degrees of freedom
-    ## Residual deviance:  5346.1  on 7858  degrees of freedom
-    ## AIC: 5374.1
+    ##     Null deviance: 10912.9  on 7871  degrees of freedom
+    ## Residual deviance:  5347.6  on 7858  degrees of freedom
+    ## AIC: 5375.6
     ## 
     ## Number of Fisher Scoring iterations: 6
 
@@ -453,28 +529,28 @@ cm.reduced
     ## 
     ##           Reference
     ## Prediction   W   L
-    ##          W 871 148
-    ##          L 165 784
-    ##                                          
-    ##                Accuracy : 0.841          
-    ##                  95% CI : (0.824, 0.8569)
-    ##     No Information Rate : 0.5264         
-    ##     P-Value [Acc > NIR] : <2e-16         
-    ##                                          
-    ##                   Kappa : 0.6813         
-    ##                                          
-    ##  Mcnemar's Test P-Value : 0.3658         
-    ##                                          
-    ##             Sensitivity : 0.8407         
-    ##             Specificity : 0.8412         
-    ##          Pos Pred Value : 0.8548         
-    ##          Neg Pred Value : 0.8261         
-    ##              Prevalence : 0.5264         
-    ##          Detection Rate : 0.4426         
-    ##    Detection Prevalence : 0.5178         
-    ##       Balanced Accuracy : 0.8410         
-    ##                                          
-    ##        'Positive' Class : W              
+    ##          W 825 149
+    ##          L 162 832
+    ##                                           
+    ##                Accuracy : 0.842           
+    ##                  95% CI : (0.8251, 0.8578)
+    ##     No Information Rate : 0.5015          
+    ##     P-Value [Acc > NIR] : <2e-16          
+    ##                                           
+    ##                   Kappa : 0.684           
+    ##                                           
+    ##  Mcnemar's Test P-Value : 0.4962          
+    ##                                           
+    ##             Sensitivity : 0.8359          
+    ##             Specificity : 0.8481          
+    ##          Pos Pred Value : 0.8470          
+    ##          Neg Pred Value : 0.8370          
+    ##              Prevalence : 0.5015          
+    ##          Detection Rate : 0.4192          
+    ##    Detection Prevalence : 0.4949          
+    ##       Balanced Accuracy : 0.8420          
+    ##                                           
+    ##        'Positive' Class : W               
     ## 
 
 Finally, we will now use LASSO for selection to compare to the simple
@@ -495,63 +571,63 @@ coef(cvfit, s= "lambda.min")
 
     ## 21 x 1 sparse Matrix of class "dgCMatrix"
     ##                        s1
-    ## (Intercept) -16.301389052
-    ## Game         -0.005224757
-    ## HomeAway     -0.343760854
-    ## HomeHome      .          
-    ## PTS           0.035849593
-    ## FG            .          
-    ## FGA          -0.153333651
-    ## `FG%`        23.802502986
-    ## `3P`          0.055823485
-    ## `3PA`         .          
-    ## `3P%`         3.033173725
-    ## FT            .          
-    ## FTA           .          
-    ## `FT%`         2.805172846
-    ## ORB          -0.006124029
-    ## TRB           0.294478444
-    ## AST           0.021556644
-    ## STL           0.315629994
-    ## BLK           0.100229225
-    ## TOV          -0.265936042
-    ## PF           -0.055145272
+    ## (Intercept) -1.684891e+01
+    ## Game        -7.047658e-03
+    ## HomeAway    -3.252777e-01
+    ## HomeHome     2.843299e-12
+    ## PTS          4.390546e-02
+    ## FG           .           
+    ## FGA         -1.769670e-01
+    ## `FG%`        2.460951e+01
+    ## `3P`         6.026291e-02
+    ## `3PA`        .           
+    ## `3P%`        2.740908e+00
+    ## FT           .           
+    ## FTA          .           
+    ## `FT%`        3.346091e+00
+    ## ORB         -1.717622e-02
+    ## TRB          3.292705e-01
+    ## AST          2.457740e-02
+    ## STL          3.502602e-01
+    ## BLK          9.505957e-02
+    ## TOV         -2.995976e-01
+    ## PF          -6.342630e-02
 
 ``` r
 cvfit$lambda.min # this is the optimal LASSO penalty value
 ```
 
-    ## [1] 0.005099009
+    ## [1] 0.002433558
 
 ``` r
 lasso.mod <- glmnet(train.x, train.y, family = "binomial", lambda = cvfit$lambda.min)
-summary(lasso.mod)
+
+coef(lasso.mod)
 ```
 
-    ##            Length Class     Mode     
-    ## a0          1     -none-    numeric  
-    ## beta       20     dgCMatrix S4       
-    ## df          1     -none-    numeric  
-    ## dim         2     -none-    numeric  
-    ## lambda      1     -none-    numeric  
-    ## dev.ratio   1     -none-    numeric  
-    ## nulldev     1     -none-    numeric  
-    ## npasses     1     -none-    numeric  
-    ## jerr        1     -none-    numeric  
-    ## offset      1     -none-    logical  
-    ## classnames  2     -none-    character
-    ## call        5     -none-    call     
-    ## nobs        1     -none-    numeric
-
-``` r
-print(lasso.mod)
-```
-
-    ## 
-    ## Call:  glmnet(x = train.x, y = train.y, family = "binomial", lambda = cvfit$lambda.min) 
-    ## 
-    ##   Df %Dev   Lambda
-    ## 1 15 50.6 0.005099
+    ## 21 x 1 sparse Matrix of class "dgCMatrix"
+    ##                        s0
+    ## (Intercept) -16.857936032
+    ## Game         -0.007049395
+    ## HomeAway     -0.321874276
+    ## HomeHome      0.003452734
+    ## PTS           0.043825272
+    ## FG            .          
+    ## FGA          -0.176964514
+    ## `FG%`        24.628978321
+    ## `3P`          0.060433705
+    ## `3PA`         .          
+    ## `3P%`         2.738715132
+    ## FT            .          
+    ## FTA           .          
+    ## `FT%`         3.348166813
+    ## ORB          -0.017124935
+    ## TRB           0.329324040
+    ## AST           0.024557572
+    ## STL           0.350326887
+    ## BLK           0.095066630
+    ## TOV          -0.299666644
+    ## PF           -0.063399775
 
 ``` r
 test.x <- model.matrix(WINorLOSS~.-1, data = test)
@@ -567,37 +643,37 @@ cm.lasso
     ## 
     ##           Reference
     ## Prediction   W   L
-    ##          W 875 137
-    ##          L 161 795
-    ##                                          
-    ##                Accuracy : 0.8486         
-    ##                  95% CI : (0.832, 0.8641)
-    ##     No Information Rate : 0.5264         
-    ##     P-Value [Acc > NIR] : <2e-16         
-    ##                                          
-    ##                   Kappa : 0.6967         
-    ##                                          
-    ##  Mcnemar's Test P-Value : 0.1827         
-    ##                                          
-    ##             Sensitivity : 0.8446         
-    ##             Specificity : 0.8530         
-    ##          Pos Pred Value : 0.8646         
-    ##          Neg Pred Value : 0.8316         
-    ##              Prevalence : 0.5264         
-    ##          Detection Rate : 0.4446         
-    ##    Detection Prevalence : 0.5142         
-    ##       Balanced Accuracy : 0.8488         
-    ##                                          
-    ##        'Positive' Class : W              
+    ##          W 820 143
+    ##          L 167 838
+    ##                                           
+    ##                Accuracy : 0.8425          
+    ##                  95% CI : (0.8256, 0.8583)
+    ##     No Information Rate : 0.5015          
+    ##     P-Value [Acc > NIR] : <2e-16          
+    ##                                           
+    ##                   Kappa : 0.685           
+    ##                                           
+    ##  Mcnemar's Test P-Value : 0.1914          
+    ##                                           
+    ##             Sensitivity : 0.8308          
+    ##             Specificity : 0.8542          
+    ##          Pos Pred Value : 0.8515          
+    ##          Neg Pred Value : 0.8338          
+    ##              Prevalence : 0.5015          
+    ##          Detection Rate : 0.4167          
+    ##    Detection Prevalence : 0.4893          
+    ##       Balanced Accuracy : 0.8425          
+    ##                                           
+    ##        'Positive' Class : W               
     ## 
 
 Create a table with the results from all the confusion Matrix models
 
 ``` r
-cm.df <- data.frame("Model" = c("Simple", "Stepwise", "Reduced", "LASSO"),
-           "Accuracy"= c(cm.simple$overall[1], cm.step$overall[1], cm.reduced$overall[1],cm.lasso$overall[1]),
-           "Sensitivity"=c(cm.simple$byClass[1], cm.step$byClass[1],cm.reduced$byClass[1], cm.lasso$byClass[1]),
-           "Specificty" = c(cm.simple$byClass[2], cm.step$byClass[2], cm.reduced$byClass[2], cm.lasso$byClass[2]))
+cm.df <- data.frame("Model" = c("Simple", "Forward", "Stepwise", "Backward", "Reduced", "LASSO"),
+           "Accuracy"= c(cm.simple$overall[1],cm.fwd$overall[1], cm.step$overall[1],cm.bkw$overall[1], cm.reduced$overall[1],cm.lasso$overall[1]),
+           "Sensitivity"=c(cm.simple$byClass[1],cm.fwd$byClass[1], cm.step$byClass[1], cm.bkw$byClass[1], cm.reduced$byClass[1], cm.lasso$byClass[1]),
+           "Specificty" = c(cm.simple$byClass[2],cm.fwd$byClass[2], cm.step$byClass[2],cm.bkw$byClass[2], cm.reduced$byClass[2], cm.lasso$byClass[2]))
 cm.df <- kable(cm.df, format = "html") %>% kable_styling(latex_options = c("striped", "scale_down"), full_width = FALSE) %>% 
   row_spec(row = 0, italic = T, background = "#21918c", color = "white") %>% 
   column_spec(1:2, width = "0.5in")
@@ -627,13 +703,27 @@ Specificty
 Simple
 </td>
 <td style="text-align:right;width: 0.5in; ">
-0.7677846
+0.7596545
 </td>
 <td style="text-align:right;">
-0.7586873
+0.7578521
 </td>
 <td style="text-align:right;">
-0.7778970
+0.7614679
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 0.5in; ">
+Forward
+</td>
+<td style="text-align:right;width: 0.5in; ">
+0.8434959
+</td>
+<td style="text-align:right;">
+0.8318136
+</td>
+<td style="text-align:right;">
+0.8552497
 </td>
 </tr>
 <tr>
@@ -641,13 +731,27 @@ Simple
 Stepwise
 </td>
 <td style="text-align:right;width: 0.5in; ">
-0.8506098
+0.8434959
 </td>
 <td style="text-align:right;">
-0.8503861
+0.8318136
 </td>
 <td style="text-align:right;">
-0.8508584
+0.8552497
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 0.5in; ">
+Backward
+</td>
+<td style="text-align:right;width: 0.5in; ">
+0.8445122
+</td>
+<td style="text-align:right;">
+0.8328267
+</td>
+<td style="text-align:right;">
+0.8562691
 </td>
 </tr>
 <tr>
@@ -655,13 +759,13 @@ Stepwise
 Reduced
 </td>
 <td style="text-align:right;width: 0.5in; ">
-0.8409553
+0.8419715
 </td>
 <td style="text-align:right;">
-0.8407336
+0.8358663
 </td>
 <td style="text-align:right;">
-0.8412017
+0.8481142
 </td>
 </tr>
 <tr>
@@ -669,14 +773,16 @@ Reduced
 LASSO
 </td>
 <td style="text-align:right;width: 0.5in; ">
-0.8485772
+0.8424797
 </td>
 <td style="text-align:right;">
-0.8445946
+0.8308004
 </td>
 <td style="text-align:right;">
-0.8530043
+0.8542304
 </td>
 </tr>
 </tbody>
 </table>
+
+try a more complex model
