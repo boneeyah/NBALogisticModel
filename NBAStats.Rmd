@@ -15,6 +15,8 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(GGally)
 library(MASS)
+library(caret)
+library(glmnet)
 ```
 
 ## load data
@@ -44,7 +46,7 @@ also removing date, since Game is a better metric of when a game takes place in 
 rawdata <- read.csv("https://raw.githubusercontent.com/boneeyah/GroupProject2/main/DataFile/nba.games.stats.csv")
 cleandata <- rawdata[,c(7,3,5,8,10:25)] #rearrange to leave W/L first
 
-str(cleandata) #check variable type
+#str(cleandata) #check variable type
 
 cleandata %>% count(WINorLOSS) %>% ggplot(aes(x=WINorLOSS, y= n, fill = WINorLOSS))+geom_bar(stat = "identity") 
 #data is perfectly balanced, becasue for each win on the data set there is an opposing team who lost and vice-versa
@@ -100,13 +102,13 @@ simple.mod <- glm(WINorLOSS~ Home + PTS + `FG%` + TRB, family = "binomial", data
 coef(simple.mod)
 summary(simple.mod)
 
-fit.pred <- predict(simple.mod, newdata = test, type = "response")
-fit.pred <- ifelse(fit.pred > .5, "W", "L")
-fit.pred <- factor(fit.pred, levels = c("W","L"))
+simple.pred <- predict(simple.mod, newdata = test, type = "response")
+simple.pred <- ifelse(simple.pred > .5, "W", "L")
+simple.pred <- factor(simple.pred, levels = c("W","L"))
 test$WINorLOSS <- factor(test$WINorLOSS, levels = c("W", "L"))
 
 
-caret::confusionMatrix(data =fit.pred, reference = test$WINorLOSS)
+cm.simple <- confusionMatrix(data =simple.pred, reference = test$WINorLOSS)
 ```
 now adding feature selection to see if the model can improve with the table in it's present format
 ```{r}
@@ -114,23 +116,53 @@ full.mod <- glm(WINorLOSS~.,family = "binomial", data=cleandata)
 step.mod <- full.mod %>% stepAIC(trace = FALSE)
 summary(step.mod)
 
-full.pred <- predict(step.mod, newdata = test, type = "response")
-full.pred <- ifelse(full.pred>.5, "W", "L")
-full.pred <- factor(full.pred, levels = c("W","L"))
+step.pred <- predict(step.mod, newdata = test, type = "response")
+step.pred <- ifelse(step.pred>.5, "W", "L")
+step.pred <- factor(step.pred, levels = c("W","L"))
 
-caret::confusionMatrix(data = full.pred, reference = test$WINorLOSS)
+cm.step <- confusionMatrix(data = step.pred, reference = test$WINorLOSS)
 ```
 The variable Game, probably does not make sense in the context of our dataset without an interaction. Since for any given game there are exactly the same number of wins and losses (each match has one winner and one loser).
 We will therefore fit a new model without Game for our no interaction model, keeping in mind that there might be potential interactions between Game and other variables which might make for a better more complex model in Objective 2
 
 ```{r}
-simple.mod <- glm(WINorLOSS~Game + Home + PTS + FG + `FG%` + `3P%` + FTA + `FT%` + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = train)
-summary(full.mod)
+reduced.mod <- glm(WINorLOSS~Game + Home + PTS + FG + `FG%` + `3P%` + FTA + `FT%` + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = train)
+summary(simple.mod)
 
-simple.pred <- predict(simple.mod, newdata = test, type = "response")
-simple.pred <- ifelse(simple.pred>.5, "W", "L")
-simple.pred <- factor(simple.pred, levels = c("W","L"))
+reduced.pred <- predict(reduced.mod, newdata = test, type = "response")
+reduced.pred <- ifelse(reduced.pred>.5, "W", "L")
+reduced.pred <- factor(reduced.pred, levels = c("W","L"))
 
-caret::confusionMatrix(simple.pred, test$WINorLOSS)
+cm.reduced <- confusionMatrix(reduced.pred, test$WINorLOSS)
+```
+Finally, we will now use LASSO for selection to compare to the simple 
+```{r}
+train.x <- model.matrix(WINorLOSS~.-1, data = train) #-1 removes intercept column
+train.y <- train[,1]
+
+cvfit <- cv.glmnet(train.x, train.y, family = "binomial", type.measure = "class")
+plot(cvfit)
+
+coef(cvfit, s= "lambda.min")
+cvfit$lambda.min # this is the optimal LASSO penalty value
+
+lasso.mod <- glmnet(train.x, train.y, family = "binomial", lambda = cvfit$lambda.min)
+summary(lasso.mod)
+
+print(lasso.mod)
+
+test.x <- model.matrix(WINorLOSS~.-1, data = test)
+lasso.pred <- predict(lasso.mod, newx = test.x, type = "response")
+lasso.pred <- ifelse(lasso.pred>.5, "W", "L")
+lasso.pred <- factor(lasso.pred, levels = c("W","L"))
+
+cm.lasso <- confusionMatrix(data = lasso.pred, reference = test$WINorLOSS)
+```
+Create a table with the results from all the confusion Matrix models
+```{r}
+#cm.lasso$overall[1]
+#cm.lasso$byClass
+
+#data.frame(1, c("Accuracy", ))
 ```
 
