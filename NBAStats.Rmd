@@ -90,10 +90,10 @@ cleandata.corr <- melt(cleandata.corr)
 
 cleandata.corr %>% ggplot(aes(x=Var1, y=Var2, fill=value))+geom_tile()+scale_fill_viridis_c()+theme(axis.title.x = element_blank(),axis.title.y = element_blank())
 ```
-
+Not surprisingly, points and field goals, free throw attempts and free throws seem to have a strong correlation
 ```{r}
 #set seed
-set.seed(1726)#8721
+set.seed(721)
 ##80-20 split of data
 index <- sample(nrow(cleandata), round(.8*nrow(cleandata)))
 train <- cleandata[index,]
@@ -151,9 +151,8 @@ coef(cvfit, s= "lambda.min")
 cvfit$lambda.min # this is the optimal LASSO penalty value
 
 lasso.mod <- glmnet(train.x, train.y, family = "binomial", lambda = cvfit$lambda.min)
-summary(lasso.mod)
 
-print(lasso.mod)
+coef(lasso.mod)
 
 test.x <- model.matrix(WINorLOSS~.-1, data = test)
 lasso.pred <- predict(lasso.mod, newx = test.x, type = "response")
@@ -173,5 +172,9 @@ cm.df <- kable(cm.df, format = "html") %>% kable_styling(latex_options = c("stri
   row_spec(row = 0, italic = T, background = "#21918c", color = "white") %>% 
   column_spec(1:2, width = "0.5in")
 cm.df
+```
+try a more complex model
+```{r}
+
 ```
 
