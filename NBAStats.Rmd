@@ -19,6 +19,7 @@ library(MASS)
 library(caret)
 library(glmnet)
 library(kableExtra)
+library(DescTools)
 ```
 
 ## load data
@@ -93,7 +94,7 @@ cleandata.corr %>% ggplot(aes(x=Var1, y=Var2, fill=value))+geom_tile()+scale_fil
 Not surprisingly, points and field goals, free throw attempts and free throws seem to have a strong correlation
 ```{r}
 #set seed
-set.seed(721)
+set.seed(1776)
 ##80-20 split of data
 index <- sample(nrow(cleandata), round(.8*nrow(cleandata)))
 train <- cleandata[index,]
@@ -114,8 +115,8 @@ cm.simple <- confusionMatrix(data =simple.pred, reference = test$WINorLOSS)
 ```
 now adding feature selection to see if the model can improve with the table in it's present format
 ```{r}
-empty.mod <- glm(WINorLOSS~ 1,family = "binomial", data = cleandata) #as a starting point for forward and stepwise selection
-full.mod <- glm(WINorLOSS~.,family = "binomial", data=cleandata) #starting point for backward selection
+empty.mod <- glm(WINorLOSS~ 1,family = "binomial", data = train) #as a starting point for forward and stepwise selection
+full.mod <- glm(WINorLOSS~.,family = "binomial", data=train) #starting point for backward selection
 step.mod <- empty.mod %>% stepAIC(direction = "both", scope = list(lower = empty.mod, upper=~Game + Home + PTS + FG + FGA + `FG%` + `3P` + `3PA` + `3P%` + FT + FTA + `FT%` + ORB + TRB + AST + STL + BLK + TOV + PF),trace = FALSE)
 summary(step.mod)
 
@@ -142,18 +143,20 @@ bkw.pred <- factor(bkw.pred, levels = c("W","L"))
 cm.bkw <- confusionMatrix(data = bkw.pred, reference = test$WINorLOSS)
 ```
 The variable Game, probably does not make sense in the context of our dataset without an interaction. Since for any given game there are exactly the same number of wins and losses (each match has one winner and one loser).
-We will therefore fit a new model without Game for our no interaction model, keeping in mind that there might be potential interactions between Game and other variables which might make for a better more complex model in Objective 2
+We will therefore fit a new model without Game for our no interaction model, keeping in mind that there might be potential interactions between Game and other variables which might make for a better more complex model in Objective 2.
+From correlation scatterplot and heatmap there is some evidence of potential colinearity between TRB and ORB. Coupled with context knowledge that Offensive rebounds are one of two values that go into total rebounds, we decided to fit the model without ORB.
+Also added FG% and FT% based on domain knowledge of efficiency
 
 ```{r}
-reduced.mod <- glm(WINorLOSS~ Home + PTS + FGA + `FG%` + `3P%` + FTA + `FT%` + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = train)
-summary(reduced.mod)
+custom.mod <- glm(WINorLOSS~ Home + PTS + FGA + `FG%` + `3PA` + `3P%` + FTA + `FT%` + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = train)
+summary(custom.mod)
 
-reduced.pred <- predict(reduced.mod, newdata = test, type = "response")
-reduced.pred <- ifelse(reduced.pred>.5, "W", "L")
-reduced.pred <- factor(reduced.pred, levels = c("W","L"))
+custom.pred <- predict(custom.mod, newdata = test, type = "response")
+custom.pred <- ifelse(custom.pred>.5, "W", "L")
+custom.pred <- factor(custom.pred, levels = c("W","L"))
 
-cm.reduced <- confusionMatrix(reduced.pred, test$WINorLOSS)
-cm.reduced
+cm.custom <- confusionMatrix(custom.pred, test$WINorLOSS)
+cm.custom
 ```
 Finally, we will now use LASSO for selection to compare to the simple 
 ```{r}
@@ -180,16 +183,18 @@ cm.lasso
 ```
 Create a table with the results from all the confusion Matrix models
 ```{r}
-cm.df <- data.frame("Model" = c("Simple", "Forward", "Stepwise", "Backward", "Reduced", "LASSO"),
-           "Accuracy"= c(cm.simple$overall[1],cm.fwd$overall[1], cm.step$overall[1],cm.bkw$overall[1], cm.reduced$overall[1],cm.lasso$overall[1]),
-           "Sensitivity"=c(cm.simple$byClass[1],cm.fwd$byClass[1], cm.step$byClass[1], cm.bkw$byClass[1], cm.reduced$byClass[1], cm.lasso$byClass[1]),
-           "Specificty" = c(cm.simple$byClass[2],cm.fwd$byClass[2], cm.step$byClass[2],cm.bkw$byClass[2], cm.reduced$byClass[2], cm.lasso$byClass[2]))
+cm.df <- data.frame("Model" = c("Simple", "Forward", "Stepwise", "Backward", "Custom", "LASSO"),
+           "Accuracy"= c(cm.simple$overall[1],cm.fwd$overall[1], cm.step$overall[1],cm.bkw$overall[1], cm.custom$overall[1],cm.lasso$overall[1]),
+           "Sensitivity"=c(cm.simple$byClass[1],cm.fwd$byClass[1], cm.step$byClass[1], cm.bkw$byClass[1], cm.custom$byClass[1], cm.lasso$byClass[1]),
+           "Specificty" = c(cm.simple$byClass[2],cm.fwd$byClass[2], cm.step$byClass[2],cm.bkw$byClass[2], cm.custom$byClass[2], cm.lasso$byClass[2]))
 cm.df <- kable(cm.df, format = "html") %>% kable_styling(latex_options = c("striped", "scale_down"), full_width = FALSE) %>% 
   row_spec(row = 0, italic = T, background = "#21918c", color = "white") %>% 
   column_spec(1:2, width = "0.5in")
 cm.df
 ```
-try a more complex model
+All the models, with the exception of the Simple model, perform reasonably well and similar to each other. Forward and Stepwise have the exact same performance, in this case they both selected the same model, which is not uncommon given that Stepwise is a modified version of forward selection (it means that the stepwise selection did not remove any variables once they were added, so it behaved the same as forward selection).
+
+Our custom model performs marginally better, with 1% higher Specificity (properly predicting true negatives), with slightly higher accuracy than the rest of the models
 ```{r}
 
 ```
