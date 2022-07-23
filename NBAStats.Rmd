@@ -2,6 +2,7 @@
 title: "GroupProject2"
 author: "Miguel Bonilla, Jordan Eaddy, Milan Patel"
 date: "7/21/2022"
+always_allow_html: true
 output:
   md_document:
     variant: markdown_github
@@ -17,6 +18,7 @@ library(GGally)
 library(MASS)
 library(caret)
 library(glmnet)
+library(kableExtra)
 ```
 
 ## load data
@@ -46,7 +48,7 @@ also removing date, since Game is a better metric of when a game takes place in 
 rawdata <- read.csv("https://raw.githubusercontent.com/boneeyah/GroupProject2/main/DataFile/nba.games.stats.csv")
 cleandata <- rawdata[,c(7,3,5,8,10:25)] #rearrange to leave W/L first
 
-#str(cleandata) #check variable type
+str(cleandata) #check variable type
 
 cleandata %>% count(WINorLOSS) %>% ggplot(aes(x=WINorLOSS, y= n, fill = WINorLOSS))+geom_bar(stat = "identity") 
 #data is perfectly balanced, becasue for each win on the data set there is an opposing team who lost and vice-versa
@@ -91,7 +93,7 @@ cleandata.corr %>% ggplot(aes(x=Var1, y=Var2, fill=value))+geom_tile()+scale_fil
 
 ```{r}
 #set seed
-set.seed(8721)
+set.seed(1726)#8721
 ##80-20 split of data
 index <- sample(nrow(cleandata), round(.8*nrow(cleandata)))
 train <- cleandata[index,]
@@ -121,19 +123,21 @@ step.pred <- ifelse(step.pred>.5, "W", "L")
 step.pred <- factor(step.pred, levels = c("W","L"))
 
 cm.step <- confusionMatrix(data = step.pred, reference = test$WINorLOSS)
+cm.step
 ```
 The variable Game, probably does not make sense in the context of our dataset without an interaction. Since for any given game there are exactly the same number of wins and losses (each match has one winner and one loser).
 We will therefore fit a new model without Game for our no interaction model, keeping in mind that there might be potential interactions between Game and other variables which might make for a better more complex model in Objective 2
 
 ```{r}
-reduced.mod <- glm(WINorLOSS~Game + Home + PTS + FG + `FG%` + `3P%` + FTA + `FT%` + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = train)
-summary(simple.mod)
+reduced.mod <- glm(WINorLOSS~ Home + PTS + FGA + `FG%` + `3P%` + FTA + `FT%` + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = train)
+summary(reduced.mod)
 
 reduced.pred <- predict(reduced.mod, newdata = test, type = "response")
 reduced.pred <- ifelse(reduced.pred>.5, "W", "L")
 reduced.pred <- factor(reduced.pred, levels = c("W","L"))
 
 cm.reduced <- confusionMatrix(reduced.pred, test$WINorLOSS)
+cm.reduced
 ```
 Finally, we will now use LASSO for selection to compare to the simple 
 ```{r}
@@ -157,12 +161,17 @@ lasso.pred <- ifelse(lasso.pred>.5, "W", "L")
 lasso.pred <- factor(lasso.pred, levels = c("W","L"))
 
 cm.lasso <- confusionMatrix(data = lasso.pred, reference = test$WINorLOSS)
+cm.lasso
 ```
 Create a table with the results from all the confusion Matrix models
 ```{r}
-#cm.lasso$overall[1]
-#cm.lasso$byClass
-
-#data.frame(1, c("Accuracy", ))
+cm.df <- data.frame("Model" = c("Simple", "Stepwise", "Reduced", "LASSO"),
+           "Accuracy"= c(cm.simple$overall[1], cm.step$overall[1], cm.reduced$overall[1],cm.lasso$overall[1]),
+           "Sensitivity"=c(cm.simple$byClass[1], cm.step$byClass[1],cm.reduced$byClass[1], cm.lasso$byClass[1]),
+           "Specificty" = c(cm.simple$byClass[2], cm.step$byClass[2], cm.reduced$byClass[2], cm.lasso$byClass[2]))
+cm.df <- kable(cm.df, format = "html") %>% kable_styling(latex_options = c("striped", "scale_down"), full_width = FALSE) %>% 
+  row_spec(row = 0, italic = T, background = "#21918c", color = "white") %>% 
+  column_spec(1:2, width = "0.5in")
+cm.df
 ```
 

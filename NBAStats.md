@@ -2,16 +2,16 @@
 library(tidyverse)
 ```
 
-    ## -- Attaching packages --------------------------------------- tidyverse 1.3.1 --
+    ## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
 
-    ## v ggplot2 3.3.5     v purrr   0.3.4
-    ## v tibble  3.1.6     v dplyr   1.0.8
-    ## v tidyr   1.2.0     v stringr 1.4.0
-    ## v readr   2.1.2     v forcats 0.5.1
+    ## ✔ ggplot2 3.3.5     ✔ purrr   0.3.4
+    ## ✔ tibble  3.1.6     ✔ dplyr   1.0.7
+    ## ✔ tidyr   1.1.4     ✔ stringr 1.4.0
+    ## ✔ readr   2.1.1     ✔ forcats 0.5.1
 
-    ## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
-    ## x dplyr::filter() masks stats::filter()
-    ## x dplyr::lag()    masks stats::lag()
+    ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+    ## ✖ dplyr::filter() masks stats::filter()
+    ## ✖ dplyr::lag()    masks stats::lag()
 
 ``` r
 library(GGally)
@@ -31,6 +31,45 @@ library(MASS)
     ## The following object is masked from 'package:dplyr':
     ## 
     ##     select
+
+``` r
+library(caret)
+```
+
+    ## Loading required package: lattice
+
+    ## 
+    ## Attaching package: 'caret'
+
+    ## The following object is masked from 'package:purrr':
+    ## 
+    ##     lift
+
+``` r
+library(glmnet)
+```
+
+    ## Loading required package: Matrix
+
+    ## 
+    ## Attaching package: 'Matrix'
+
+    ## The following objects are masked from 'package:tidyr':
+    ## 
+    ##     expand, pack, unpack
+
+    ## Loaded glmnet 4.1-4
+
+``` r
+library(kableExtra)
+```
+
+    ## 
+    ## Attaching package: 'kableExtra'
+
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     group_rows
 
 ## load data
 
@@ -212,7 +251,7 @@ cleandata.corr %>% ggplot(aes(x=Var1, y=Var2, fill=value))+geom_tile()+scale_fil
 
 ``` r
 #set seed
-set.seed(8721)
+set.seed(1726)#8721
 ##80-20 split of data
 index <- sample(nrow(cleandata), round(.8*nrow(cleandata)))
 train <- cleandata[index,]
@@ -224,44 +263,48 @@ coef(simple.mod)
 ```
 
     ##  (Intercept)     HomeHome          PTS        `FG%`          TRB 
-    ## -21.14561532   0.47434482   0.03098361  23.81551143   0.15718761
+    ## -21.58434006   0.52997432   0.03180096  24.49187691   0.15724328
 
 ``` r
-fit.pred <- predict(simple.mod, newdata = test, type = "response")
-fit.pred <- ifelse(fit.pred > .5, "W", "L")
-fit.pred <- factor(fit.pred, levels = c("W","L"))
-test$WINorLOSS <- factor(test$WINorLOSS, levels = c("W", "L"))
-
-caret::confusionMatrix(data =fit.pred, reference = test$WINorLOSS)
+summary(simple.mod)
 ```
 
-    ## Confusion Matrix and Statistics
     ## 
-    ##           Reference
-    ## Prediction   W   L
-    ##          W 751 213
-    ##          L 237 767
-    ##                                           
-    ##                Accuracy : 0.7713          
-    ##                  95% CI : (0.7521, 0.7897)
-    ##     No Information Rate : 0.502           
-    ##     P-Value [Acc > NIR] : <2e-16          
-    ##                                           
-    ##                   Kappa : 0.5427          
-    ##                                           
-    ##  Mcnemar's Test P-Value : 0.2783          
-    ##                                           
-    ##             Sensitivity : 0.7601          
-    ##             Specificity : 0.7827          
-    ##          Pos Pred Value : 0.7790          
-    ##          Neg Pred Value : 0.7639          
-    ##              Prevalence : 0.5020          
-    ##          Detection Rate : 0.3816          
-    ##    Detection Prevalence : 0.4898          
-    ##       Balanced Accuracy : 0.7714          
-    ##                                           
-    ##        'Positive' Class : W               
+    ## Call:
+    ## glm(formula = WINorLOSS ~ Home + PTS + `FG%` + TRB, family = "binomial", 
+    ##     data = train)
     ## 
+    ## Deviance Residuals: 
+    ##     Min       1Q   Median       3Q      Max  
+    ## -3.0782  -0.7748  -0.1478   0.7786   2.8805  
+    ## 
+    ## Coefficients:
+    ##               Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept) -21.584340   0.510053 -42.318   <2e-16 ***
+    ## HomeHome      0.529974   0.056683   9.350   <2e-16 ***
+    ## PTS           0.031801   0.003536   8.995   <2e-16 ***
+    ## `FG%`        24.491877   0.906396  27.021   <2e-16 ***
+    ## TRB           0.157243   0.005563  28.265   <2e-16 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## (Dispersion parameter for binomial family taken to be 1)
+    ## 
+    ##     Null deviance: 10911.5  on 7871  degrees of freedom
+    ## Residual deviance:  7568.2  on 7867  degrees of freedom
+    ## AIC: 7578.2
+    ## 
+    ## Number of Fisher Scoring iterations: 5
+
+``` r
+simple.pred <- predict(simple.mod, newdata = test, type = "response")
+simple.pred <- ifelse(simple.pred > .5, "W", "L")
+simple.pred <- factor(simple.pred, levels = c("W","L"))
+test$WINorLOSS <- factor(test$WINorLOSS, levels = c("W", "L"))
+
+
+cm.simple <- confusionMatrix(data =simple.pred, reference = test$WINorLOSS)
+```
 
 now adding feature selection to see if the model can improve with the
 table in it’s present format
@@ -311,39 +354,40 @@ summary(step.mod)
     ## Number of Fisher Scoring iterations: 6
 
 ``` r
-full.pred <- predict(step.mod, newdata = test, type = "response")
-full.pred <- ifelse(full.pred>.5, "W", "L")
-full.pred <- factor(full.pred, levels = c("W","L"))
+step.pred <- predict(step.mod, newdata = test, type = "response")
+step.pred <- ifelse(step.pred>.5, "W", "L")
+step.pred <- factor(step.pred, levels = c("W","L"))
 
-caret::confusionMatrix(data = full.pred, reference = test$WINorLOSS)
+cm.step <- confusionMatrix(data = step.pred, reference = test$WINorLOSS)
+cm.step
 ```
 
     ## Confusion Matrix and Statistics
     ## 
     ##           Reference
     ## Prediction   W   L
-    ##          W 837 135
-    ##          L 151 845
-    ##                                         
-    ##                Accuracy : 0.8547        
-    ##                  95% CI : (0.8383, 0.87)
-    ##     No Information Rate : 0.502         
-    ##     P-Value [Acc > NIR] : <2e-16        
-    ##                                         
-    ##                   Kappa : 0.7094        
-    ##                                         
-    ##  Mcnemar's Test P-Value : 0.3751        
-    ##                                         
-    ##             Sensitivity : 0.8472        
-    ##             Specificity : 0.8622        
-    ##          Pos Pred Value : 0.8611        
-    ##          Neg Pred Value : 0.8484        
-    ##              Prevalence : 0.5020        
-    ##          Detection Rate : 0.4253        
-    ##    Detection Prevalence : 0.4939        
-    ##       Balanced Accuracy : 0.8547        
-    ##                                         
-    ##        'Positive' Class : W             
+    ##          W 881 139
+    ##          L 155 793
+    ##                                           
+    ##                Accuracy : 0.8506          
+    ##                  95% CI : (0.8341, 0.8661)
+    ##     No Information Rate : 0.5264          
+    ##     P-Value [Acc > NIR] : <2e-16          
+    ##                                           
+    ##                   Kappa : 0.7006          
+    ##                                           
+    ##  Mcnemar's Test P-Value : 0.3817          
+    ##                                           
+    ##             Sensitivity : 0.8504          
+    ##             Specificity : 0.8509          
+    ##          Pos Pred Value : 0.8637          
+    ##          Neg Pred Value : 0.8365          
+    ##              Prevalence : 0.5264          
+    ##          Detection Rate : 0.4477          
+    ##    Detection Prevalence : 0.5183          
+    ##       Balanced Accuracy : 0.8506          
+    ##                                           
+    ##        'Positive' Class : W               
     ## 
 
 The variable Game, probably does not make sense in the context of our
@@ -355,39 +399,284 @@ interactions between Game and other variables which might make for a
 better more complex model in Objective 2
 
 ``` r
-simple.mod <- glm(WINorLOSS~Game + Home + PTS + FG + `FG%` + `3P%` + FTA + `FT%` + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = train)
+reduced.mod <- glm(WINorLOSS~ Home + PTS + FGA + `FG%` + `3P%` + FTA + `FT%` + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = train)
+summary(reduced.mod)
+```
 
-simple.pred <- predict(simple.mod, newdata = test, type = "response")
-simple.pred <- ifelse(simple.pred>.5, "W", "L")
-simple.pred <- factor(simple.pred, levels = c("W","L"))
+    ## 
+    ## Call:
+    ## glm(formula = WINorLOSS ~ Home + PTS + FGA + `FG%` + `3P%` + 
+    ##     FTA + `FT%` + TRB + AST + STL + BLK + TOV + PF, family = "binomial", 
+    ##     data = train)
+    ## 
+    ## Deviance Residuals: 
+    ##     Min       1Q   Median       3Q      Max  
+    ## -2.9624  -0.4919  -0.0344   0.4492   3.3016  
+    ## 
+    ## Coefficients:
+    ##               Estimate Std. Error z value Pr(>|z|)    
+    ## (Intercept) -11.693728   1.467159  -7.970 1.58e-15 ***
+    ## HomeHome      0.444503   0.069541   6.392 1.64e-10 ***
+    ## PTS           0.116255   0.013254   8.771  < 2e-16 ***
+    ## FGA          -0.266739   0.015267 -17.472  < 2e-16 ***
+    ## `FG%`        14.578815   2.246414   6.490 8.59e-11 ***
+    ## `3P%`         3.389475   0.539014   6.288 3.21e-10 ***
+    ## FTA          -0.061500   0.011246  -5.469 4.53e-08 ***
+    ## `FT%`         2.040862   0.440041   4.638 3.52e-06 ***
+    ## TRB           0.356585   0.009847  36.213  < 2e-16 ***
+    ## AST           0.030257   0.009174   3.298 0.000973 ***
+    ## STL           0.392792   0.014793  26.552  < 2e-16 ***
+    ## BLK           0.126235   0.014095   8.956  < 2e-16 ***
+    ## TOV          -0.331862   0.012265 -27.058  < 2e-16 ***
+    ## PF           -0.061544   0.008687  -7.085 1.39e-12 ***
+    ## ---
+    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ## 
+    ## (Dispersion parameter for binomial family taken to be 1)
+    ## 
+    ##     Null deviance: 10911.5  on 7871  degrees of freedom
+    ## Residual deviance:  5346.1  on 7858  degrees of freedom
+    ## AIC: 5374.1
+    ## 
+    ## Number of Fisher Scoring iterations: 6
 
-caret::confusionMatrix(simple.pred, test$WINorLOSS)
+``` r
+reduced.pred <- predict(reduced.mod, newdata = test, type = "response")
+reduced.pred <- ifelse(reduced.pred>.5, "W", "L")
+reduced.pred <- factor(reduced.pred, levels = c("W","L"))
+
+cm.reduced <- confusionMatrix(reduced.pred, test$WINorLOSS)
+cm.reduced
 ```
 
     ## Confusion Matrix and Statistics
     ## 
     ##           Reference
     ## Prediction   W   L
-    ##          W 825 138
-    ##          L 163 842
-    ##                                           
-    ##                Accuracy : 0.8471          
-    ##                  95% CI : (0.8304, 0.8627)
-    ##     No Information Rate : 0.502           
-    ##     P-Value [Acc > NIR] : <2e-16          
-    ##                                           
-    ##                   Kappa : 0.6941          
-    ##                                           
-    ##  Mcnemar's Test P-Value : 0.1666          
-    ##                                           
-    ##             Sensitivity : 0.8350          
-    ##             Specificity : 0.8592          
-    ##          Pos Pred Value : 0.8567          
-    ##          Neg Pred Value : 0.8378          
-    ##              Prevalence : 0.5020          
-    ##          Detection Rate : 0.4192          
-    ##    Detection Prevalence : 0.4893          
-    ##       Balanced Accuracy : 0.8471          
-    ##                                           
-    ##        'Positive' Class : W               
+    ##          W 871 148
+    ##          L 165 784
+    ##                                          
+    ##                Accuracy : 0.841          
+    ##                  95% CI : (0.824, 0.8569)
+    ##     No Information Rate : 0.5264         
+    ##     P-Value [Acc > NIR] : <2e-16         
+    ##                                          
+    ##                   Kappa : 0.6813         
+    ##                                          
+    ##  Mcnemar's Test P-Value : 0.3658         
+    ##                                          
+    ##             Sensitivity : 0.8407         
+    ##             Specificity : 0.8412         
+    ##          Pos Pred Value : 0.8548         
+    ##          Neg Pred Value : 0.8261         
+    ##              Prevalence : 0.5264         
+    ##          Detection Rate : 0.4426         
+    ##    Detection Prevalence : 0.5178         
+    ##       Balanced Accuracy : 0.8410         
+    ##                                          
+    ##        'Positive' Class : W              
     ## 
+
+Finally, we will now use LASSO for selection to compare to the simple
+
+``` r
+train.x <- model.matrix(WINorLOSS~.-1, data = train) #-1 removes intercept column
+train.y <- train[,1]
+
+cvfit <- cv.glmnet(train.x, train.y, family = "binomial", type.measure = "class")
+plot(cvfit)
+```
+
+![](NBAStats_files/figure-markdown_github/unnamed-chunk-8-1.png)
+
+``` r
+coef(cvfit, s= "lambda.min")
+```
+
+    ## 21 x 1 sparse Matrix of class "dgCMatrix"
+    ##                        s1
+    ## (Intercept) -16.301389052
+    ## Game         -0.005224757
+    ## HomeAway     -0.343760854
+    ## HomeHome      .          
+    ## PTS           0.035849593
+    ## FG            .          
+    ## FGA          -0.153333651
+    ## `FG%`        23.802502986
+    ## `3P`          0.055823485
+    ## `3PA`         .          
+    ## `3P%`         3.033173725
+    ## FT            .          
+    ## FTA           .          
+    ## `FT%`         2.805172846
+    ## ORB          -0.006124029
+    ## TRB           0.294478444
+    ## AST           0.021556644
+    ## STL           0.315629994
+    ## BLK           0.100229225
+    ## TOV          -0.265936042
+    ## PF           -0.055145272
+
+``` r
+cvfit$lambda.min # this is the optimal LASSO penalty value
+```
+
+    ## [1] 0.005099009
+
+``` r
+lasso.mod <- glmnet(train.x, train.y, family = "binomial", lambda = cvfit$lambda.min)
+summary(lasso.mod)
+```
+
+    ##            Length Class     Mode     
+    ## a0          1     -none-    numeric  
+    ## beta       20     dgCMatrix S4       
+    ## df          1     -none-    numeric  
+    ## dim         2     -none-    numeric  
+    ## lambda      1     -none-    numeric  
+    ## dev.ratio   1     -none-    numeric  
+    ## nulldev     1     -none-    numeric  
+    ## npasses     1     -none-    numeric  
+    ## jerr        1     -none-    numeric  
+    ## offset      1     -none-    logical  
+    ## classnames  2     -none-    character
+    ## call        5     -none-    call     
+    ## nobs        1     -none-    numeric
+
+``` r
+print(lasso.mod)
+```
+
+    ## 
+    ## Call:  glmnet(x = train.x, y = train.y, family = "binomial", lambda = cvfit$lambda.min) 
+    ## 
+    ##   Df %Dev   Lambda
+    ## 1 15 50.6 0.005099
+
+``` r
+test.x <- model.matrix(WINorLOSS~.-1, data = test)
+lasso.pred <- predict(lasso.mod, newx = test.x, type = "response")
+lasso.pred <- ifelse(lasso.pred>.5, "W", "L")
+lasso.pred <- factor(lasso.pred, levels = c("W","L"))
+
+cm.lasso <- confusionMatrix(data = lasso.pred, reference = test$WINorLOSS)
+cm.lasso
+```
+
+    ## Confusion Matrix and Statistics
+    ## 
+    ##           Reference
+    ## Prediction   W   L
+    ##          W 875 137
+    ##          L 161 795
+    ##                                          
+    ##                Accuracy : 0.8486         
+    ##                  95% CI : (0.832, 0.8641)
+    ##     No Information Rate : 0.5264         
+    ##     P-Value [Acc > NIR] : <2e-16         
+    ##                                          
+    ##                   Kappa : 0.6967         
+    ##                                          
+    ##  Mcnemar's Test P-Value : 0.1827         
+    ##                                          
+    ##             Sensitivity : 0.8446         
+    ##             Specificity : 0.8530         
+    ##          Pos Pred Value : 0.8646         
+    ##          Neg Pred Value : 0.8316         
+    ##              Prevalence : 0.5264         
+    ##          Detection Rate : 0.4446         
+    ##    Detection Prevalence : 0.5142         
+    ##       Balanced Accuracy : 0.8488         
+    ##                                          
+    ##        'Positive' Class : W              
+    ## 
+
+Create a table with the results from all the confusion Matrix models
+
+``` r
+cm.df <- data.frame("Model" = c("Simple", "Stepwise", "Reduced", "LASSO"),
+           "Accuracy"= c(cm.simple$overall[1], cm.step$overall[1], cm.reduced$overall[1],cm.lasso$overall[1]),
+           "Sensitivity"=c(cm.simple$byClass[1], cm.step$byClass[1],cm.reduced$byClass[1], cm.lasso$byClass[1]),
+           "Specificty" = c(cm.simple$byClass[2], cm.step$byClass[2], cm.reduced$byClass[2], cm.lasso$byClass[2]))
+cm.df <- kable(cm.df, format = "html") %>% kable_styling(latex_options = c("striped", "scale_down"), full_width = FALSE) %>% 
+  row_spec(row = 0, italic = T, background = "#21918c", color = "white") %>% 
+  column_spec(1:2, width = "0.5in")
+cm.df
+```
+
+<table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
+Model
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+Accuracy
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+Sensitivity
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+Specificty
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;width: 0.5in; ">
+Simple
+</td>
+<td style="text-align:right;width: 0.5in; ">
+0.7677846
+</td>
+<td style="text-align:right;">
+0.7586873
+</td>
+<td style="text-align:right;">
+0.7778970
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 0.5in; ">
+Stepwise
+</td>
+<td style="text-align:right;width: 0.5in; ">
+0.8506098
+</td>
+<td style="text-align:right;">
+0.8503861
+</td>
+<td style="text-align:right;">
+0.8508584
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 0.5in; ">
+Reduced
+</td>
+<td style="text-align:right;width: 0.5in; ">
+0.8409553
+</td>
+<td style="text-align:right;">
+0.8407336
+</td>
+<td style="text-align:right;">
+0.8412017
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 0.5in; ">
+LASSO
+</td>
+<td style="text-align:right;width: 0.5in; ">
+0.8485772
+</td>
+<td style="text-align:right;">
+0.8445946
+</td>
+<td style="text-align:right;">
+0.8530043
+</td>
+</tr>
+</tbody>
+</table>
