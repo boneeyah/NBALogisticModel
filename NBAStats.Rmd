@@ -48,19 +48,20 @@ also removing date, since Game is a better metric of when a game takes place in 
 
 ```{r wrangling and corr mat}
 rawdata <- read.csv("https://raw.githubusercontent.com/boneeyah/GroupProject2/main/DataFile/nba.games.stats.csv")
+##change variable names
+rawdata <- rename(rawdata, c("PTS" = TeamPoints, "FG"=FieldGoals,"FGA"=FieldGoalsAttempted, "FG%"=FieldGoals., "3PA"=X3PointShotsAttempted, "3P" = X3PointShots, "3P%"=X3PointShots.,"FT"=FreeThrows, "FTA"=FreeThrowsAttempted, "FT%"=FreeThrows.,"ORB"=OffRebounds,"TRB"=TotalRebounds, "AST"=Assists, "STL"=Steals,"BLK"=Blocks,"TOV"=Turnovers, "PF"=TotalFouls, "Opp" = Opponent))
+#set categorical variables to factors
+rawdata$WINorLOSS <- as.factor(rawdata$WINorLOSS)
+rawdata$Home <- as.factor(rawdata$Home)
+rawdata$Team <- as.factor(rawdata$Team)
+rawdata$Opp <- as.factor(rawdata$Opp)
+
 cleandata <- rawdata[,c(7,3,5,8,10:25)] #rearrange to leave W/L first
 
 str(cleandata) #check variable type
 
 cleandata %>% count(WINorLOSS) %>% ggplot(aes(x=WINorLOSS, y= n, fill = WINorLOSS))+geom_bar(stat = "identity") 
 #data is perfectly balanced, becasue for each win on the data set there is an opposing team who lost and vice-versa
-
-#set categorical variables to factors
-cleandata$WINorLOSS <- as.factor(cleandata$WINorLOSS)
-cleandata$Home <- as.factor(cleandata$Home)
-
-##change variable names
-cleandata <- rename(cleandata, c("PTS" = TeamPoints, "FG"=FieldGoals,"FGA"=FieldGoalsAttempted, "FG%"=FieldGoals., "3PA"=X3PointShotsAttempted, "3P" = X3PointShots, "3P%"=X3PointShots.,"FT"=FreeThrows, "FTA"=FreeThrowsAttempted, "FT%"=FreeThrows.,"ORB"=OffRebounds,"TRB"=TotalRebounds, "AST"=Assists, "STL"=Steals,"BLK"=Blocks,"TOV"=Turnovers, "PF"=TotalFouls))
 
 sapply(cleandata, function(x) sum(is.na(x))) #no NAs present
 
@@ -255,8 +256,23 @@ data.frame("coefficient" = coef(custom.mod.full),
 ```
 ## Objective 2
 Creating a complex model introducing interactions
+Added team and Opp Categorical variables, largely increases complexity since they're categorical variables
+with 30 levels
 ```{r}
+complexdata <- rawdata[,c(7,2,3,5,6,8,10:25)]
+complexdata <- complexdata %>%  mutate(PTSsq = PTS^2, DIV = 2*((TRB + AST + 4*STL + 2*BLK)-(4*TOV + 2*PF)))
+train.complex <- complexdata[index,]
+test.complex <- complexdata[-index,]
 
+complex.mod <- glm(formula = WINorLOSS ~ Team + Home + Opp + PTS + FGA + 
+                     `FG%` + `3P%` + `3PA` + FTA + `FT%` + TRB + AST + 
+                     STL + BLK + TOV + PF + Team:STL, family = "binomial", data = train.complex)
+complex.pred <- predict(complex.mod, test.complex, type = "response")
+complex.pred <- ifelse(complex.pred>.5, "W", "L")
+complex.pred <- factor(complex.pred, levels = c("W", "L"))
+test.complex$WINorLOSS <- factor(test.complex$WINorLOSS, levels = c("W", "L"))
+
+cm.complex <- confusionMatrix(complex.pred, test.complex$WINorLOSS)
+cm.complex
 ```
-
 

@@ -2,16 +2,16 @@
 library(tidyverse)
 ```
 
-    ## -- Attaching packages --------------------------------------- tidyverse 1.3.1 --
+    ## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
 
-    ## v ggplot2 3.3.5     v purrr   0.3.4
-    ## v tibble  3.1.6     v dplyr   1.0.8
-    ## v tidyr   1.2.0     v stringr 1.4.0
-    ## v readr   2.1.2     v forcats 0.5.1
+    ## ✔ ggplot2 3.3.5     ✔ purrr   0.3.4
+    ## ✔ tibble  3.1.6     ✔ dplyr   1.0.7
+    ## ✔ tidyr   1.1.4     ✔ stringr 1.4.0
+    ## ✔ readr   2.1.1     ✔ forcats 0.5.1
 
-    ## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
-    ## x dplyr::filter() masks stats::filter()
-    ## x dplyr::lag()    masks stats::lag()
+    ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+    ## ✖ dplyr::filter() masks stats::filter()
+    ## ✖ dplyr::lag()    masks stats::lag()
 
 ``` r
 library(GGally)
@@ -36,8 +36,6 @@ library(MASS)
 library(caret)
 ```
 
-    ## Warning: package 'caret' was built under R version 4.1.3
-
     ## Loading required package: lattice
 
     ## 
@@ -50,8 +48,6 @@ library(caret)
 ``` r
 library(glmnet)
 ```
-
-    ## Warning: package 'glmnet' was built under R version 4.1.3
 
     ## Loading required package: Matrix
 
@@ -119,48 +115,49 @@ relation to the point of the season
 
 ``` r
 rawdata <- read.csv("https://raw.githubusercontent.com/boneeyah/GroupProject2/main/DataFile/nba.games.stats.csv")
+##change variable names
+rawdata <- rename(rawdata, c("PTS" = TeamPoints, "FG"=FieldGoals,"FGA"=FieldGoalsAttempted, "FG%"=FieldGoals., "3PA"=X3PointShotsAttempted, "3P" = X3PointShots, "3P%"=X3PointShots.,"FT"=FreeThrows, "FTA"=FreeThrowsAttempted, "FT%"=FreeThrows.,"ORB"=OffRebounds,"TRB"=TotalRebounds, "AST"=Assists, "STL"=Steals,"BLK"=Blocks,"TOV"=Turnovers, "PF"=TotalFouls, "Opp" = Opponent))
+#set categorical variables to factors
+rawdata$WINorLOSS <- as.factor(rawdata$WINorLOSS)
+rawdata$Home <- as.factor(rawdata$Home)
+rawdata$Team <- as.factor(rawdata$Team)
+rawdata$Opp <- as.factor(rawdata$Opp)
+
 cleandata <- rawdata[,c(7,3,5,8,10:25)] #rearrange to leave W/L first
 
 str(cleandata) #check variable type
 ```
 
     ## 'data.frame':    9840 obs. of  20 variables:
-    ##  $ WINorLOSS            : chr  "L" "W" "L" "L" ...
-    ##  $ Game                 : int  1 2 3 4 5 6 7 8 9 10 ...
-    ##  $ Home                 : chr  "Away" "Home" "Away" "Away" ...
-    ##  $ TeamPoints           : int  102 102 92 119 103 91 100 114 94 109 ...
-    ##  $ FieldGoals           : int  40 35 38 43 33 27 39 42 40 41 ...
-    ##  $ FieldGoalsAttempted  : int  80 69 92 93 81 71 76 75 90 85 ...
-    ##  $ FieldGoals.          : num  0.5 0.507 0.413 0.462 0.407 0.38 0.513 0.56 0.444 0.482 ...
-    ##  $ X3PointShots         : int  13 7 8 13 9 10 9 11 3 9 ...
-    ##  $ X3PointShotsAttempted: int  22 20 25 33 22 27 20 28 22 27 ...
-    ##  $ X3PointShots.        : num  0.591 0.35 0.32 0.394 0.409 0.37 0.45 0.393 0.136 0.333 ...
-    ##  $ FreeThrows           : int  9 25 8 20 28 27 13 19 11 18 ...
-    ##  $ FreeThrowsAttempted  : int  17 33 11 26 36 28 18 23 13 23 ...
-    ##  $ FreeThrows.          : num  0.529 0.758 0.727 0.769 0.778 0.964 0.722 0.826 0.846 0.783 ...
-    ##  $ OffRebounds          : int  10 3 10 7 12 9 13 3 11 13 ...
-    ##  $ TotalRebounds        : int  42 37 37 38 41 38 46 36 37 38 ...
-    ##  $ Assists              : int  26 26 26 28 18 20 23 33 26 22 ...
-    ##  $ Steals               : int  6 10 14 8 10 7 8 10 6 7 ...
-    ##  $ Blocks               : int  8 6 5 3 5 3 4 5 8 3 ...
-    ##  $ Turnovers            : int  17 12 13 19 8 15 18 13 18 10 ...
-    ##  $ TotalFouls           : int  24 20 25 33 17 16 12 20 12 17 ...
+    ##  $ WINorLOSS: Factor w/ 2 levels "L","W": 1 2 1 1 2 2 2 2 1 1 ...
+    ##  $ Game     : int  1 2 3 4 5 6 7 8 9 10 ...
+    ##  $ Home     : Factor w/ 2 levels "Away","Home": 1 2 1 1 2 1 2 2 1 2 ...
+    ##  $ PTS      : int  102 102 92 119 103 91 100 114 94 109 ...
+    ##  $ FG       : int  40 35 38 43 33 27 39 42 40 41 ...
+    ##  $ FGA      : int  80 69 92 93 81 71 76 75 90 85 ...
+    ##  $ FG%      : num  0.5 0.507 0.413 0.462 0.407 0.38 0.513 0.56 0.444 0.482 ...
+    ##  $ 3P       : int  13 7 8 13 9 10 9 11 3 9 ...
+    ##  $ 3PA      : int  22 20 25 33 22 27 20 28 22 27 ...
+    ##  $ 3P%      : num  0.591 0.35 0.32 0.394 0.409 0.37 0.45 0.393 0.136 0.333 ...
+    ##  $ FT       : int  9 25 8 20 28 27 13 19 11 18 ...
+    ##  $ FTA      : int  17 33 11 26 36 28 18 23 13 23 ...
+    ##  $ FT%      : num  0.529 0.758 0.727 0.769 0.778 0.964 0.722 0.826 0.846 0.783 ...
+    ##  $ ORB      : int  10 3 10 7 12 9 13 3 11 13 ...
+    ##  $ TRB      : int  42 37 37 38 41 38 46 36 37 38 ...
+    ##  $ AST      : int  26 26 26 28 18 20 23 33 26 22 ...
+    ##  $ STL      : int  6 10 14 8 10 7 8 10 6 7 ...
+    ##  $ BLK      : int  8 6 5 3 5 3 4 5 8 3 ...
+    ##  $ TOV      : int  17 12 13 19 8 15 18 13 18 10 ...
+    ##  $ PF       : int  24 20 25 33 17 16 12 20 12 17 ...
 
 ``` r
 cleandata %>% count(WINorLOSS) %>% ggplot(aes(x=WINorLOSS, y= n, fill = WINorLOSS))+geom_bar(stat = "identity") 
 ```
 
-![](NBAStats_files/figure-markdown_github/unnamed-chunk-2-1.png)
+![](NBAStats_files/figure-markdown_github/wrangling%20and%20corr%20mat-1.png)
 
 ``` r
 #data is perfectly balanced, becasue for each win on the data set there is an opposing team who lost and vice-versa
-
-#set categorical variables to factors
-cleandata$WINorLOSS <- as.factor(cleandata$WINorLOSS)
-cleandata$Home <- as.factor(cleandata$Home)
-
-##change variable names
-cleandata <- rename(cleandata, c("PTS" = TeamPoints, "FG"=FieldGoals,"FGA"=FieldGoalsAttempted, "FG%"=FieldGoals., "3PA"=X3PointShotsAttempted, "3P" = X3PointShots, "3P%"=X3PointShots.,"FT"=FreeThrows, "FTA"=FreeThrowsAttempted, "FT%"=FreeThrows.,"ORB"=OffRebounds,"TRB"=TotalRebounds, "AST"=Assists, "STL"=Steals,"BLK"=Blocks,"TOV"=Turnovers, "PF"=TotalFouls))
 
 sapply(cleandata, function(x) sum(is.na(x))) #no NAs present
 ```
@@ -173,7 +170,7 @@ sapply(cleandata, function(x) sum(is.na(x))) #no NAs present
     ##         0         0         0         0
 
 ``` r
-ggpairs(cleandata, columns = 2:10, aes(color = WINorLOSS))
+ggpairs(cleandata, columns = 2:20, aes(color = WINorLOSS))
 ```
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
@@ -184,65 +181,74 @@ ggpairs(cleandata, columns = 2:10, aes(color = WINorLOSS))
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
 
-![](NBAStats_files/figure-markdown_github/unnamed-chunk-2-2.png)
+![](NBAStats_files/figure-markdown_github/wrangling%20and%20corr%20mat-2.png)
 
 ``` r
-ggpairs(cleandata, columns = 11:20, aes(color = WINorLOSS))
+#ggpairs(cleandata, columns = 11:20, aes(color = WINorLOSS))
 ```
 
-![](NBAStats_files/figure-markdown_github/unnamed-chunk-2-3.png) There
-is a separation between home and away also for team points, field goals,
-field goal %, 3 point shots and 3 point shot % to a lesser extent, total
-rebounds, assists, and turnovers
+There is a separation between home and away also for team points, field
+goals, field goal %, 3 point shots and 3 point shot % to a lesser
+extent, total rebounds, assists, and turnovers
 
 ``` r
 plot(WINorLOSS~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
 ```
 
-![](NBAStats_files/figure-markdown_github/unnamed-chunk-3-1.png)
+![](NBAStats_files/figure-markdown_github/var%20plots-1.png)
 
 ``` r
 plot(PTS~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
 ```
 
-![](NBAStats_files/figure-markdown_github/unnamed-chunk-3-2.png)
+![](NBAStats_files/figure-markdown_github/var%20plots-2.png)
 
 ``` r
 plot(`FG%`~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
 ```
 
-![](NBAStats_files/figure-markdown_github/unnamed-chunk-3-3.png)
+![](NBAStats_files/figure-markdown_github/var%20plots-3.png)
 
 ``` r
 plot(FG~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
 ```
 
-![](NBAStats_files/figure-markdown_github/unnamed-chunk-3-4.png)
+![](NBAStats_files/figure-markdown_github/var%20plots-4.png)
 
 ``` r
 plot(`3PA`~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
 ```
 
-![](NBAStats_files/figure-markdown_github/unnamed-chunk-3-5.png)
+![](NBAStats_files/figure-markdown_github/var%20plots-5.png)
 
 ``` r
 plot(`3P%`~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
 ```
 
-![](NBAStats_files/figure-markdown_github/unnamed-chunk-3-6.png)
+![](NBAStats_files/figure-markdown_github/var%20plots-6.png)
 
 ``` r
 plot(TRB~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
 ```
 
-![](NBAStats_files/figure-markdown_github/unnamed-chunk-3-7.png)
+![](NBAStats_files/figure-markdown_github/var%20plots-7.png)
 
 ``` r
 plot(AST~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
 ```
 
-![](NBAStats_files/figure-markdown_github/unnamed-chunk-3-8.png)
+![](NBAStats_files/figure-markdown_github/var%20plots-8.png)
 ##correlation plot build a heatmap to check for correlation between
 explanatory variables
 
@@ -266,7 +272,7 @@ cleandata.corr <- melt(cleandata.corr)
 cleandata.corr %>% ggplot(aes(x=Var1, y=Var2, fill=value))+geom_tile()+scale_fill_viridis_c()+theme(axis.title.x = element_blank(),axis.title.y = element_blank())
 ```
 
-![](NBAStats_files/figure-markdown_github/unnamed-chunk-4-1.png) Not
+![](NBAStats_files/figure-markdown_github/heatmap-1.png) Not
 surprisingly, points and field goals, free throw attempts and free
 throws seem to have a strong correlation
 
@@ -584,7 +590,7 @@ cvfit <- cv.glmnet(train.x, train.y, family = "binomial", type.measure = "class"
 plot(cvfit)
 ```
 
-![](NBAStats_files/figure-markdown_github/unnamed-chunk-8-1.png)
+![](NBAStats_files/figure-markdown_github/lasso-1.png)
 
 ``` r
 coef(cvfit, s= "lambda.min")
@@ -595,7 +601,7 @@ coef(cvfit, s= "lambda.min")
     ## (Intercept) -1.767853e+01
     ## Game        -1.002832e-02
     ## HomeAway    -3.730098e-01
-    ## HomeHome     2.068702e-14
+    ## HomeHome     2.651337e-14
     ## PTS          4.255645e-02
     ## FG           .           
     ## FGA         -1.903141e-01
@@ -631,7 +637,7 @@ coef(lasso.mod)
     ## (Intercept) -1.609676e+01
     ## Game        -1.004130e-02
     ## HomeAway    -3.732512e-01
-    ## HomeHome     2.150742e-15
+    ## HomeHome     1.572842e-15
     ## PTS          5.989892e-02
     ## FG           .           
     ## FGA         -2.061993e-01
@@ -808,11 +814,7 @@ LASSO
 
 ``` r
 library(ROCR)
-```
 
-    ## Warning: package 'ROCR' was built under R version 4.1.3
-
-``` r
 custom.pred.roc <- prediction(predict(custom.mod, newdata = test, type = "response"), test$WINorLOSS)
 custom.roc <- performance(custom.pred.roc, "tpr", "fpr")
 lasso.pred.roc <- prediction(predict(lasso.mod, newx = test.x, type = "response"), test$WINorLOSS)
@@ -832,7 +834,7 @@ plot(custom.roc, col = "green", lwd = 1, add = TRUE)
 legend(x = .75, y = .4, legend = c("simple", "backwards", "stepwise", "lasso", "custom"), col = c("black", "red", "blue", "orange", "green"), lty =1)
 ```
 
-![](NBAStats_files/figure-markdown_github/unnamed-chunk-10-1.png)
+![](NBAStats_files/figure-markdown_github/roc%20plot-1.png)
 
 All the models, with the exception of the Simple model, perform
 reasonably well and similar to each other. Forward and Stepwise have the
@@ -926,6 +928,27 @@ cm.custom.full
     ##                                           
     ##        'Positive' Class : W               
     ## 
+
+Calculate leverage and influence plots to check assumptions are met
+
+``` r
+library(blorr)
+blr_plot_diag_fit(custom.mod.full)
+```
+
+![](NBAStats_files/figure-markdown_github/assumptions-1.png)
+
+``` r
+blr_plot_diag_leverage(custom.mod.full)
+```
+
+![](NBAStats_files/figure-markdown_github/assumptions-2.png)
+
+``` r
+blr_plot_diag_influence(custom.mod.full)
+```
+
+![](NBAStats_files/figure-markdown_github/assumptions-3.png)
 
 create table with interpretable values on odds ratio scale
 
@@ -1217,3 +1240,55 @@ PF
 </tr>
 </tbody>
 </table>
+
+## Objective 2
+
+Creating a complex model introducing interactions Added team and Opp
+Categorical variables, largely increases complexity since they’re
+categorical variables with 30 levels
+
+``` r
+complexdata <- rawdata[,c(7,2,3,5,6,8,10:25)]
+complexdata <- complexdata %>%  mutate(PTSsq = PTS^2, DIV = 2*((TRB + AST + 4*STL + 2*BLK)-(4*TOV + 2*PF)))
+train.complex <- complexdata[index,]
+test.complex <- complexdata[-index,]
+
+complex.mod <- glm(formula = WINorLOSS ~ Team + Home + Opp + PTS + FGA + 
+                     `FG%` + `3P%` + `3PA` + FTA + `FT%` + TRB + AST + 
+                     STL + BLK + TOV + PF + Team:STL, family = "binomial", data = train.complex)
+complex.pred <- predict(complex.mod, test.complex, type = "response")
+complex.pred <- ifelse(complex.pred>.5, "W", "L")
+complex.pred <- factor(complex.pred, levels = c("W", "L"))
+test.complex$WINorLOSS <- factor(test.complex$WINorLOSS, levels = c("W", "L"))
+
+cm.complex <- confusionMatrix(complex.pred, test.complex$WINorLOSS)
+cm.complex
+```
+
+    ## Confusion Matrix and Statistics
+    ## 
+    ##           Reference
+    ## Prediction   W   L
+    ##          W 876 141
+    ##          L 140 811
+    ##                                          
+    ##                Accuracy : 0.8572         
+    ##                  95% CI : (0.841, 0.8724)
+    ##     No Information Rate : 0.5163         
+    ##     P-Value [Acc > NIR] : <2e-16         
+    ##                                          
+    ##                   Kappa : 0.7141         
+    ##                                          
+    ##  Mcnemar's Test P-Value : 1              
+    ##                                          
+    ##             Sensitivity : 0.8622         
+    ##             Specificity : 0.8519         
+    ##          Pos Pred Value : 0.8614         
+    ##          Neg Pred Value : 0.8528         
+    ##              Prevalence : 0.5163         
+    ##          Detection Rate : 0.4451         
+    ##    Detection Prevalence : 0.5168         
+    ##       Balanced Accuracy : 0.8570         
+    ##                                          
+    ##        'Positive' Class : W              
+    ## 
