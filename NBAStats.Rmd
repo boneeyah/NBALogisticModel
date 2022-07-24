@@ -180,6 +180,7 @@ cm.lasso <- confusionMatrix(data = lasso.pred, reference = test$WINorLOSS)
 cm.lasso
 ```
 ## will move this to obj 2 section
+## need to add new models to table
 Create a table with the results from all the confusion Matrix models
 ```{r perf met table}
 cm.df <- data.frame("Model" = c("Simple", "Forward", "Stepwise", "Backward", "Custom", "LASSO"),
@@ -192,6 +193,7 @@ cm.df <- kable(cm.df, format = "html") %>% kable_styling(latex_options = c("stri
 cm.df
 ```
 ## will move this to Obj 2 section
+## need to add new models to this curve
 ```{r roc plot}
 library(ROCR)
 
@@ -274,21 +276,25 @@ cm.complex
 ```
 LASSO fit
 ```{r lasso 2}
-plot(cvfit)
-coef(cvfit, s= "lambda.min")
+train.complex.x <- model.matrix(WINorLOSS~.-1, data = train.complex) #-1 removes intercept column
+train.complex.y <- train.complex[,1]
 
-paste("optimal LASSO penalty value",sprintf("%.10f",cvfit$lambda.min)) # this is the optimal LASSO penalty value
+cvfit2 <- cv.glmnet(train.complex.x, train.complex.y, family = "binomial", type.measure = "class")
+plot(cvfit2)
+coef(cvfit2, s= "lambda.min")
 
-lasso.mod2 <- glmnet(train.x, train.y, family = "binomial", lambda = cvfit$lambda.min)
+paste("optimal LASSO penalty value",sprintf("%.10f",cvfit2$lambda.min)) # this is the optimal LASSO penalty value
+
+lasso.mod2 <- glmnet(train.complex.x, train.complex.y, family = "binomial", lambda = cvfit2$lambda.min)
 
 coef(lasso.mod2)
 
-test.x <- model.matrix(WINorLOSS~.-1, data = test)
-lasso.pred2 <- predict(lasso.mod2, newx = test.x, type = "response")
+test.complex.x <- model.matrix(WINorLOSS~.-1, data = test.complex)
+lasso.pred2 <- predict(lasso.mod2, newx = test.complex.x, type = "response")
 lasso.pred2 <- ifelse(lasso.pred2>.5, "W", "L")
 lasso.pred2 <- factor(lasso.pred2, levels = c("W","L"))
 
-cm.lasso2 <- confusionMatrix(data = lasso.pred2, reference = test$WINorLOSS)
+cm.lasso2 <- confusionMatrix(data = lasso.pred2, reference = test.complex$WINorLOSS)
 cm.lasso2
 ```
 
@@ -317,5 +323,59 @@ PCA might move this to an earlier point
 PCA <-  prcomp(train.num[,-1], scale. = TRUE)
 PCA
 summary(PCA)
+```
+## random forests classification
+finding the tuning parameter mtry takes the longest from running this code
+it can be skipped to run this much faster
+```{r}
+library(randomForest)
+train.expl <- train.complex[,2:24]
+train.resp <- train.complex[,1]
+
+train(train.expl, train.resp, method = "rf") # this takes 10+ minutes to run, # returns ideal mtry=12
+
+```
+```{r}
+rfdata <- complexdata %>% rename("FGp" = "FG%", "3P","ThP" = "3P", "ThPA" = "3PA", "ThPp" = "3P%", "FTp" = "FT%")
+train.rf <- rfdata[index,]
+test.rf <- rfdata[-index,]
+rf.mod <- randomForest(WINorLOSS~., data = train.rf, mtry = 12, ntree =300, cutoff = c(.45,.55))
+rf.pred <- predict(rf.mod, test.rf)
+rf.pred <- factor(rf.pred, levels = c("W", "L"))
+test.rf$WINorLOSS <- factor(test.rf$WINorLOSS, levels = c("W","L"))
+
+cm.rf <- confusionMatrix(rf.pred, test.rf$WINorLOSS)
+cm.rf
+```
+
+Update table with Obj 2 models
+```{r new table}
+cm.df <- data.frame("Model" = c("Simple", "Forward", "Stepwise", "Backward", "Custom", "LASSO", "Complex", "LASSO 2", "LDA", "QDA", "RandomForests"),
+           "Accuracy"= c(cm.simple$overall[1],cm.fwd$overall[1], cm.step$overall[1],cm.bkw$overall[1], cm.custom$overall[1],cm.lasso$overall[1],cm.complex$overall[1], cm.lasso2$overall[1], cm.lda$overall[1], cm.qda$overall[1], cm.rf$overall[1]),
+           "Sensitivity"=c(cm.simple$byClass[1],cm.fwd$byClass[1], cm.step$byClass[1], cm.bkw$byClass[1], cm.custom$byClass[1], cm.lasso$byClass[1], cm.complex$byClass[1], cm.lasso2$byClass[1], cm.lda$byClass[1], cm.qda$byClass[1], cm.rf$byClass[1]),
+           "Specificty" = c(cm.simple$byClass[2],cm.fwd$byClass[2], cm.step$byClass[2],cm.bkw$byClass[2], cm.custom$byClass[2], cm.lasso$byClass[2], cm.complex$byClass[2], cm.lasso2$byClass[2], cm.lda$byClass[2], cm.qda$byClass[2], cm.rf$byClass[2]))
+cm.df <- kable(cm.df, format = "html") %>% kable_styling(latex_options = c("striped", "scale_down"), full_width = FALSE) %>% 
+  row_spec(row = 0, italic = T, background = "#21918c", color = "white") %>% 
+  column_spec(1:2, width = "0.5in")
+cm.df
+```
+
+New ROC with Obj 2 models
+Might Add LDA and QDA to this
+Need to add Legend
+```{r new roc plot}
+
+complex.pred.roc <- prediction(predict(complex.mod, newdata = test.complex, type = "response"), test.complex$WINorLOSS)
+complex.roc <- performance(complex.pred.roc, "tpr", "fpr")
+lasso2.pred.roc <- prediction(predict(lasso.mod2, newx = test.complex.x, type = "response"), test.complex$WINorLOSS)
+lasso2.roc <- performance(lasso2.pred.roc, "tpr", "fpr")
+
+
+
+plot(complex.roc, colorize = T, lwd=2)
+plot(lasso2.roc, lwd = 1, add = TRUE)
+plot(lasso.roc, lwd = 1, add = TRUE, col = "red")
+#legend(x = .75, y = .4, legend = c("simple", "backwards", "stepwise", "lasso", "custom"), col = c("black", "red", "blue", "orange", "green"), lty =1)
+
 ```
 

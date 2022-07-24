@@ -660,6 +660,8 @@ cm.lasso
 
 ## will move this to obj 2 section
 
+## need to add new models to table
+
 Create a table with the results from all the confusion Matrix models
 
 ``` r
@@ -779,6 +781,8 @@ LASSO
 </table>
 
 ## will move this to Obj 2 section
+
+## need to add new models to this curve
 
 ``` r
 library(ROCR)
@@ -1273,82 +1277,206 @@ cm.complex
 LASSO fit
 
 ``` r
-plot(cvfit)
+train.complex.x <- model.matrix(WINorLOSS~.-1, data = train.complex) #-1 removes intercept column
+train.complex.y <- train.complex[,1]
+
+cvfit2 <- cv.glmnet(train.complex.x, train.complex.y, family = "binomial", type.measure = "class")
+plot(cvfit2)
 ```
 
 ![](NBAStats_files/figure-markdown_github/lasso%202-1.png)
 
 ``` r
-coef(cvfit, s= "lambda.min")
+coef(cvfit2, s= "lambda.min")
 ```
 
-    ## 21 x 1 sparse Matrix of class "dgCMatrix"
+    ## 81 x 1 sparse Matrix of class "dgCMatrix"
     ##                        s1
-    ## (Intercept) -1.767853e+01
-    ## Game        -1.002832e-02
-    ## HomeAway    -3.730098e-01
-    ## HomeHome     2.068702e-14
-    ## PTS          4.255645e-02
-    ## FG           .           
-    ## FGA         -1.903141e-01
-    ## `FG%`        2.629215e+01
-    ## `3P`         6.787991e-02
-    ## `3PA`       -1.848352e-03
-    ## `3P%`        3.033334e+00
-    ## FT           .           
-    ## FTA         -5.303693e-03
-    ## `FT%`        3.600350e+00
-    ## ORB         -3.091630e-02
-    ## TRB          3.611933e-01
-    ## AST          2.699783e-02
-    ## STL          3.867636e-01
-    ## BLK          1.159804e-01
-    ## TOV         -3.246846e-01
-    ## PF          -6.538609e-02
+    ## (Intercept) -19.792925220
+    ## TeamATL       0.137218940
+    ## TeamBOS       0.673583793
+    ## TeamBRK      -0.724244539
+    ## TeamCHI      -0.287562890
+    ## TeamCHO      -0.669744709
+    ## TeamCLE       0.663828737
+    ## TeamDAL       0.202503300
+    ## TeamDEN      -0.586904271
+    ## TeamDET       .          
+    ## TeamGSW       0.690145465
+    ## TeamHOU       1.107667936
+    ## TeamIND       .          
+    ## TeamLAC       .          
+    ## TeamLAL      -0.842160750
+    ## TeamMEM       0.294321646
+    ## TeamMIA       .          
+    ## TeamMIL      -0.117555930
+    ## TeamMIN      -0.891156659
+    ## TeamNOP      -0.587856466
+    ## TeamNYK      -0.772057910
+    ## TeamOKC       0.110603422
+    ## TeamORL      -0.568474844
+    ## TeamPHI      -0.402024397
+    ## TeamPHO      -0.258587748
+    ## TeamPOR       0.104301492
+    ## TeamSAC      -0.530487855
+    ## TeamSAS       0.045923708
+    ## TeamTOR       0.355025238
+    ## TeamUTA      -0.041840013
+    ## TeamWAS       .          
+    ## Game         -0.009432524
+    ## HomeHome      0.431091125
+    ## OppBOS       -0.289040090
+    ## OppBRK        0.165330897
+    ## OppCHI       -0.081201686
+    ## OppCHO        0.180770315
+    ## OppCLE       -0.926387743
+    ## OppDAL       -0.130417338
+    ## OppDEN        .          
+    ## OppDET        .          
+    ## OppGSW       -1.584942029
+    ## OppHOU       -1.092676804
+    ## OppIND        0.222649895
+    ## OppLAC       -0.533994196
+    ## OppLAL        0.689101393
+    ## OppMEM        0.370721802
+    ## OppMIA        0.348699332
+    ## OppMIL        0.452951321
+    ## OppMIN        1.187168786
+    ## OppNOP       -0.010749444
+    ## OppNYK        1.118735179
+    ## OppOKC        .          
+    ## OppORL        0.441973834
+    ## OppPHI        1.122914248
+    ## OppPHO        0.777969924
+    ## OppPOR       -0.413711702
+    ## OppSAC        0.593960134
+    ## OppSAS       -0.454511698
+    ## OppTOR       -0.211553598
+    ## OppUTA        0.471679352
+    ## OppWAS        .          
+    ## PTS           0.036248833
+    ## FG            .          
+    ## FGA          -0.173234353
+    ## `FG%`        27.006435922
+    ## `3P`          0.057245636
+    ## `3PA`        -0.022461123
+    ## `3P%`         3.588971856
+    ## FT            .          
+    ## FTA           .          
+    ## `FT%`         4.036031880
+    ## ORB          -0.044359946
+    ## TRB           0.324475716
+    ## AST           .          
+    ## STL           0.188417171
+    ## BLK           .          
+    ## TOV          -0.128543293
+    ## PF            0.022316027
+    ## PTSsq         .          
+    ## DIV           0.024089321
 
 ``` r
-paste("optimal LASSO penalty value",sprintf("%.10f",cvfit$lambda.min)) # this is the optimal LASSO penalty value
+paste("optimal LASSO penalty value",sprintf("%.10f",cvfit2$lambda.min)) # this is the optimal LASSO penalty value
 ```
 
-    ## [1] "optimal LASSO penalty value 0.0008531947"
+    ## [1] "optimal LASSO penalty value 0.0012378394"
 
 ``` r
-lasso.mod2 <- glmnet(train.x, train.y, family = "binomial", lambda = cvfit$lambda.min)
+lasso.mod2 <- glmnet(train.complex.x, train.complex.y, family = "binomial", lambda = cvfit2$lambda.min)
 
 coef(lasso.mod2)
 ```
 
-    ## 21 x 1 sparse Matrix of class "dgCMatrix"
+    ## 81 x 1 sparse Matrix of class "dgCMatrix"
     ##                        s0
-    ## (Intercept) -1.609676e+01
-    ## Game        -1.004130e-02
-    ## HomeAway    -3.732512e-01
-    ## HomeHome     2.150742e-15
-    ## PTS          5.989892e-02
-    ## FG           .           
-    ## FGA         -2.061993e-01
-    ## `FG%`        2.339709e+01
-    ## `3P`         4.957543e-02
-    ## `3PA`       -1.406527e-03
-    ## `3P%`        3.054570e+00
-    ## FT           .           
-    ## FTA         -1.855439e-02
-    ## `FT%`        3.238121e+00
-    ## ORB         -3.065572e-02
-    ## TRB          3.615629e-01
-    ## AST          2.687960e-02
-    ## STL          3.870225e-01
-    ## BLK          1.160526e-01
-    ## TOV         -3.250018e-01
-    ## PF          -6.534351e-02
+    ## (Intercept) -19.765503398
+    ## TeamATL       0.138843618
+    ## TeamBOS       0.674114283
+    ## TeamBRK      -0.723874762
+    ## TeamCHI      -0.287170475
+    ## TeamCHO      -0.669902144
+    ## TeamCLE       0.663184779
+    ## TeamDAL       0.202027918
+    ## TeamDEN      -0.585958275
+    ## TeamDET       .          
+    ## TeamGSW       0.694611067
+    ## TeamHOU       1.109554266
+    ## TeamIND       .          
+    ## TeamLAC       .          
+    ## TeamLAL      -0.842649690
+    ## TeamMEM       0.294494008
+    ## TeamMIA       .          
+    ## TeamMIL      -0.115645937
+    ## TeamMIN      -0.890510829
+    ## TeamNOP      -0.585978604
+    ## TeamNYK      -0.770690847
+    ## TeamOKC       0.110779309
+    ## TeamORL      -0.568080055
+    ## TeamPHI      -0.399316909
+    ## TeamPHO      -0.258959999
+    ## TeamPOR       0.103958420
+    ## TeamSAC      -0.530637366
+    ## TeamSAS       0.047464743
+    ## TeamTOR       0.355009552
+    ## TeamUTA      -0.040874004
+    ## TeamWAS       .          
+    ## Game         -0.009436784
+    ## HomeHome      0.431831662
+    ## OppBOS       -0.289271480
+    ## OppBRK        0.163781705
+    ## OppCHI       -0.082051314
+    ## OppCHO        0.180141581
+    ## OppCLE       -0.927709729
+    ## OppDAL       -0.132464006
+    ## OppDEN        .          
+    ## OppDET        .          
+    ## OppGSW       -1.587186729
+    ## OppHOU       -1.092770028
+    ## OppIND        0.222193291
+    ## OppLAC       -0.534882451
+    ## OppLAL        0.688998181
+    ## OppMEM        0.370973058
+    ## OppMIA        0.346946902
+    ## OppMIL        0.453495617
+    ## OppMIN        1.187320707
+    ## OppNOP       -0.012046790
+    ## OppNYK        1.117309363
+    ## OppOKC        .          
+    ## OppORL        0.441923962
+    ## OppPHI        1.122521952
+    ## OppPHO        0.776905138
+    ## OppPOR       -0.416111931
+    ## OppSAC        0.594210580
+    ## OppSAS       -0.455888914
+    ## OppTOR       -0.211454982
+    ## OppUTA        0.470459566
+    ## OppWAS        .          
+    ## PTS           0.036204065
+    ## FG            .          
+    ## FGA          -0.173137492
+    ## `FG%`        27.034563285
+    ## `3P`          0.062202287
+    ## `3PA`        -0.024155932
+    ## `3P%`         3.479983469
+    ## FT            .          
+    ## FTA           .          
+    ## `FT%`         4.037062941
+    ## ORB          -0.044493025
+    ## TRB           0.325188441
+    ## AST           .          
+    ## STL           0.190622203
+    ## BLK           .          
+    ## TOV          -0.130633763
+    ## PF            0.021295021
+    ## PTSsq         .          
+    ## DIV           0.023854409
 
 ``` r
-test.x <- model.matrix(WINorLOSS~.-1, data = test)
-lasso.pred2 <- predict(lasso.mod2, newx = test.x, type = "response")
+test.complex.x <- model.matrix(WINorLOSS~.-1, data = test.complex)
+lasso.pred2 <- predict(lasso.mod2, newx = test.complex.x, type = "response")
 lasso.pred2 <- ifelse(lasso.pred2>.5, "W", "L")
 lasso.pred2 <- factor(lasso.pred2, levels = c("W","L"))
 
-cm.lasso2 <- confusionMatrix(data = lasso.pred2, reference = test$WINorLOSS)
+cm.lasso2 <- confusionMatrix(data = lasso.pred2, reference = test.complex$WINorLOSS)
 cm.lasso2
 ```
 
@@ -1356,26 +1484,26 @@ cm.lasso2
     ## 
     ##           Reference
     ## Prediction   W   L
-    ##          W 867 162
-    ##          L 149 790
+    ##          W 870 143
+    ##          L 146 809
     ##                                           
-    ##                Accuracy : 0.842           
-    ##                  95% CI : (0.8251, 0.8578)
+    ##                Accuracy : 0.8532          
+    ##                  95% CI : (0.8367, 0.8685)
     ##     No Information Rate : 0.5163          
     ##     P-Value [Acc > NIR] : <2e-16          
     ##                                           
-    ##                   Kappa : 0.6835          
+    ##                   Kappa : 0.706           
     ##                                           
-    ##  Mcnemar's Test P-Value : 0.4962          
+    ##  Mcnemar's Test P-Value : 0.9063          
     ##                                           
-    ##             Sensitivity : 0.8533          
-    ##             Specificity : 0.8298          
-    ##          Pos Pred Value : 0.8426          
-    ##          Neg Pred Value : 0.8413          
+    ##             Sensitivity : 0.8563          
+    ##             Specificity : 0.8498          
+    ##          Pos Pred Value : 0.8588          
+    ##          Neg Pred Value : 0.8471          
     ##              Prevalence : 0.5163          
-    ##          Detection Rate : 0.4405          
-    ##    Detection Prevalence : 0.5229          
-    ##       Balanced Accuracy : 0.8416          
+    ##          Detection Rate : 0.4421          
+    ##    Detection Prevalence : 0.5147          
+    ##       Balanced Accuracy : 0.8530          
     ##                                           
     ##        'Positive' Class : W               
     ## 
@@ -1539,3 +1667,306 @@ summary(PCA)
     ## Standard deviation     0.07496
     ## Proportion of Variance 0.00037
     ## Cumulative Proportion  1.00000
+
+## random forests classification
+
+finding the tuning parameter mtry takes the longest from running this
+code it can be skipped to run this much faster
+
+``` r
+library(randomForest)
+```
+
+    ## Warning: package 'randomForest' was built under R version 4.1.3
+
+    ## randomForest 4.7-1
+
+    ## Type rfNews() to see new features/changes/bug fixes.
+
+    ## 
+    ## Attaching package: 'randomForest'
+
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     combine
+
+    ## The following object is masked from 'package:ggplot2':
+    ## 
+    ##     margin
+
+``` r
+train.expl <- train.complex[,2:24]
+train.resp <- train.complex[,1]
+
+train(train.expl, train.resp, method = "rf") # this takes 10+ minutes to run, # returns ideal mtry=12
+```
+
+    ## Random Forest 
+    ## 
+    ## 7872 samples
+    ##   23 predictor
+    ##    2 classes: 'L', 'W' 
+    ## 
+    ## No pre-processing
+    ## Resampling: Bootstrapped (25 reps) 
+    ## Summary of sample sizes: 7872, 7872, 7872, 7872, 7872, 7872, ... 
+    ## Resampling results across tuning parameters:
+    ## 
+    ##   mtry  Accuracy   Kappa    
+    ##    2    0.7986088  0.5978322
+    ##   12    0.8134209  0.6271286
+    ##   23    0.8099719  0.6201235
+    ## 
+    ## Accuracy was used to select the optimal model using the largest value.
+    ## The final value used for the model was mtry = 12.
+
+``` r
+rfdata <- complexdata %>% rename("FGp" = "FG%", "3P","ThP" = "3P", "ThPA" = "3PA", "ThPp" = "3P%", "FTp" = "FT%")
+train.rf <- rfdata[index,]
+test.rf <- rfdata[-index,]
+rf.mod <- randomForest(WINorLOSS~., data = train.rf, mtry = 12, ntree =300, cutoff = c(.45,.55))
+rf.pred <- predict(rf.mod, test.rf)
+rf.pred <- factor(rf.pred, levels = c("W", "L"))
+test.rf$WINorLOSS <- factor(test.rf$WINorLOSS, levels = c("W","L"))
+
+cm.rf <- confusionMatrix(rf.pred, test.rf$WINorLOSS)
+cm.rf
+```
+
+    ## Confusion Matrix and Statistics
+    ## 
+    ##           Reference
+    ## Prediction   W   L
+    ##          W 841 165
+    ##          L 175 787
+    ##                                           
+    ##                Accuracy : 0.8272          
+    ##                  95% CI : (0.8098, 0.8437)
+    ##     No Information Rate : 0.5163          
+    ##     P-Value [Acc > NIR] : <2e-16          
+    ##                                           
+    ##                   Kappa : 0.6542          
+    ##                                           
+    ##  Mcnemar's Test P-Value : 0.6255          
+    ##                                           
+    ##             Sensitivity : 0.8278          
+    ##             Specificity : 0.8267          
+    ##          Pos Pred Value : 0.8360          
+    ##          Neg Pred Value : 0.8181          
+    ##              Prevalence : 0.5163          
+    ##          Detection Rate : 0.4273          
+    ##    Detection Prevalence : 0.5112          
+    ##       Balanced Accuracy : 0.8272          
+    ##                                           
+    ##        'Positive' Class : W               
+    ## 
+
+Update table with Obj 2 models
+
+``` r
+cm.df <- data.frame("Model" = c("Simple", "Forward", "Stepwise", "Backward", "Custom", "LASSO", "Complex", "LASSO 2", "LDA", "QDA", "RandomForests"),
+           "Accuracy"= c(cm.simple$overall[1],cm.fwd$overall[1], cm.step$overall[1],cm.bkw$overall[1], cm.custom$overall[1],cm.lasso$overall[1],cm.complex$overall[1], cm.lasso2$overall[1], cm.lda$overall[1], cm.qda$overall[1], cm.rf$overall[1]),
+           "Sensitivity"=c(cm.simple$byClass[1],cm.fwd$byClass[1], cm.step$byClass[1], cm.bkw$byClass[1], cm.custom$byClass[1], cm.lasso$byClass[1], cm.complex$byClass[1], cm.lasso2$byClass[1], cm.lda$byClass[1], cm.qda$byClass[1], cm.rf$byClass[1]),
+           "Specificty" = c(cm.simple$byClass[2],cm.fwd$byClass[2], cm.step$byClass[2],cm.bkw$byClass[2], cm.custom$byClass[2], cm.lasso$byClass[2], cm.complex$byClass[2], cm.lasso2$byClass[2], cm.lda$byClass[2], cm.qda$byClass[2], cm.rf$byClass[2]))
+cm.df <- kable(cm.df, format = "html") %>% kable_styling(latex_options = c("striped", "scale_down"), full_width = FALSE) %>% 
+  row_spec(row = 0, italic = T, background = "#21918c", color = "white") %>% 
+  column_spec(1:2, width = "0.5in")
+cm.df
+```
+
+<table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
+Model
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+Accuracy
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+Sensitivity
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+Specificty
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;width: 0.5in; ">
+Simple
+</td>
+<td style="text-align:right;width: 0.5in; ">
+0.7591463
+</td>
+<td style="text-align:right;">
+0.7588583
+</td>
+<td style="text-align:right;">
+0.7594538
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 0.5in; ">
+Forward
+</td>
+<td style="text-align:right;width: 0.5in; ">
+0.8414634
+</td>
+<td style="text-align:right;">
+0.8543307
+</td>
+<td style="text-align:right;">
+0.8277311
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 0.5in; ">
+Stepwise
+</td>
+<td style="text-align:right;width: 0.5in; ">
+0.8414634
+</td>
+<td style="text-align:right;">
+0.8543307
+</td>
+<td style="text-align:right;">
+0.8277311
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 0.5in; ">
+Backward
+</td>
+<td style="text-align:right;width: 0.5in; ">
+0.8404472
+</td>
+<td style="text-align:right;">
+0.8533465
+</td>
+<td style="text-align:right;">
+0.8266807
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 0.5in; ">
+Custom
+</td>
+<td style="text-align:right;width: 0.5in; ">
+0.8480691
+</td>
+<td style="text-align:right;">
+0.8592520
+</td>
+<td style="text-align:right;">
+0.8361345
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 0.5in; ">
+LASSO
+</td>
+<td style="text-align:right;width: 0.5in; ">
+0.8414634
+</td>
+<td style="text-align:right;">
+0.8523622
+</td>
+<td style="text-align:right;">
+0.8298319
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 0.5in; ">
+Complex
+</td>
+<td style="text-align:right;width: 0.5in; ">
+0.8572154
+</td>
+<td style="text-align:right;">
+0.8622047
+</td>
+<td style="text-align:right;">
+0.8518908
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 0.5in; ">
+LASSO 2
+</td>
+<td style="text-align:right;width: 0.5in; ">
+0.8531504
+</td>
+<td style="text-align:right;">
+0.8562992
+</td>
+<td style="text-align:right;">
+0.8497899
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 0.5in; ">
+LDA
+</td>
+<td style="text-align:right;width: 0.5in; ">
+0.8358740
+</td>
+<td style="text-align:right;">
+0.8319328
+</td>
+<td style="text-align:right;">
+0.8395669
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 0.5in; ">
+QDA
+</td>
+<td style="text-align:right;width: 0.5in; ">
+0.8267276
+</td>
+<td style="text-align:right;">
+0.8224790
+</td>
+<td style="text-align:right;">
+0.8307087
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 0.5in; ">
+RandomForests
+</td>
+<td style="text-align:right;width: 0.5in; ">
+0.8272358
+</td>
+<td style="text-align:right;">
+0.8277559
+</td>
+<td style="text-align:right;">
+0.8266807
+</td>
+</tr>
+</tbody>
+</table>
+
+New ROC with Obj 2 models Might Add LDA and QDA to this Need to add
+Legend
+
+``` r
+complex.pred.roc <- prediction(predict(complex.mod, newdata = test.complex, type = "response"), test.complex$WINorLOSS)
+complex.roc <- performance(complex.pred.roc, "tpr", "fpr")
+lasso2.pred.roc <- prediction(predict(lasso.mod2, newx = test.complex.x, type = "response"), test.complex$WINorLOSS)
+lasso2.roc <- performance(lasso2.pred.roc, "tpr", "fpr")
+
+
+
+plot(complex.roc, colorize = T, lwd=2)
+plot(lasso2.roc, lwd = 1, add = TRUE)
+plot(lasso.roc, lwd = 1, add = TRUE, col = "red")
+```
+
+![](NBAStats_files/figure-markdown_github/new%20roc%20plot-1.png)
+
+``` r
+#legend(x = .75, y = .4, legend = c("simple", "backwards", "stepwise", "lasso", "custom"), col = c("black", "red", "blue", "orange", "green"), lty =1)
+```
