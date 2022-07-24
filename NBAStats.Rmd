@@ -12,7 +12,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r}
+```{r libraries}
 library(tidyverse)
 library(GGally)
 library(MASS)
@@ -46,7 +46,7 @@ also removing date, since Game is a better metric of when a game takes place in 
 * TOV - Turnovers
 * PF - Fouls
 
-```{r}
+```{r wrangling and corr mat}
 rawdata <- read.csv("https://raw.githubusercontent.com/boneeyah/GroupProject2/main/DataFile/nba.games.stats.csv")
 cleandata <- rawdata[,c(7,3,5,8,10:25)] #rearrange to leave W/L first
 
@@ -64,14 +64,14 @@ cleandata <- rename(cleandata, c("PTS" = TeamPoints, "FG"=FieldGoals,"FGA"=Field
 
 sapply(cleandata, function(x) sum(is.na(x))) #no NAs present
 
-ggpairs(cleandata, columns = 2:10, aes(color = WINorLOSS))
-ggpairs(cleandata, columns = 11:20, aes(color = WINorLOSS))
+ggpairs(cleandata, columns = 2:20, aes(color = WINorLOSS))
+#ggpairs(cleandata, columns = 11:20, aes(color = WINorLOSS))
 
 ```
 There is a separation between home and away
 also for team points, field goals, field goal %, 3 point shots and 3 point shot %
 to a lesser extent, total rebounds, assists, and turnovers
-```{r}
+```{r var plots}
 plot(WINorLOSS~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
 plot(PTS~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
 plot(`FG%`~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
@@ -83,7 +83,7 @@ plot(AST~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
 ```
 ##correlation plot
 build a heatmap to check for correlation between explanatory variables
-```{r}
+```{r heatmap}
 library(lattice)
 library(reshape2)
 library(ggthemes)
@@ -93,7 +93,7 @@ cleandata.corr <- melt(cleandata.corr)
 cleandata.corr %>% ggplot(aes(x=Var1, y=Var2, fill=value))+geom_tile()+scale_fill_viridis_c()+theme(axis.title.x = element_blank(),axis.title.y = element_blank())
 ```
 Not surprisingly, points and field goals, free throw attempts and free throws seem to have a strong correlation
-```{r}
+```{r split and simple}
 #set seed
 set.seed(1776)
 ##80-20 split of data
@@ -115,7 +115,7 @@ test$WINorLOSS <- factor(test$WINorLOSS, levels = c("W", "L"))
 cm.simple <- confusionMatrix(data =simple.pred, reference = test$WINorLOSS)
 ```
 now adding feature selection to see if the model can improve with the table in it's present format
-```{r}
+```{r fwd bkw and step}
 empty.mod <- glm(WINorLOSS~ 1,family = "binomial", data = train) #as a starting point for forward and stepwise selection
 full.mod <- glm(WINorLOSS~.,family = "binomial", data=train) #starting point for backward selection
 step.mod <- empty.mod %>% stepAIC(direction = "both", scope = list(lower = empty.mod, upper=~Game + Home + PTS + FG + FGA + `FG%` + `3P` + `3PA` + `3P%` + FT + FTA + `FT%` + ORB + TRB + AST + STL + BLK + TOV + PF),trace = FALSE)
@@ -149,7 +149,7 @@ From correlation scatterplot and heatmap there is some evidence of potential col
 
 Fitting a custom model without ORB and without Game variable
 
-```{r}
+```{r custom}
 custom.mod <- glm(WINorLOSS~ Home + PTS + FGA + `3PA` + `3P%` + FTA + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = train)
 summary(custom.mod)
 
@@ -161,7 +161,7 @@ cm.custom <- confusionMatrix(custom.pred, test$WINorLOSS)
 cm.custom
 ```
 Finally, we will now use LASSO for selection to compare to the simple 
-```{r}
+```{r lasso}
 train.x <- model.matrix(WINorLOSS~.-1, data = train) #-1 removes intercept column
 train.y <- train[,1]
 
@@ -184,7 +184,7 @@ cm.lasso <- confusionMatrix(data = lasso.pred, reference = test$WINorLOSS)
 cm.lasso
 ```
 Create a table with the results from all the confusion Matrix models
-```{r}
+```{r perf met table}
 cm.df <- data.frame("Model" = c("Simple", "Forward", "Stepwise", "Backward", "Custom", "LASSO"),
            "Accuracy"= c(cm.simple$overall[1],cm.fwd$overall[1], cm.step$overall[1],cm.bkw$overall[1], cm.custom$overall[1],cm.lasso$overall[1]),
            "Sensitivity"=c(cm.simple$byClass[1],cm.fwd$byClass[1], cm.step$byClass[1], cm.bkw$byClass[1], cm.custom$byClass[1], cm.lasso$byClass[1]),
@@ -194,7 +194,7 @@ cm.df <- kable(cm.df, format = "html") %>% kable_styling(latex_options = c("stri
   column_spec(1:2, width = "0.5in")
 cm.df
 ```
-```{r}
+```{r roc plot}
 library(ROCR)
 
 custom.pred.roc <- prediction(predict(custom.mod, newdata = test, type = "response"), test$WINorLOSS)
@@ -219,7 +219,7 @@ legend(x = .75, y = .4, legend = c("simple", "backwards", "stepwise", "lasso", "
 All the models, with the exception of the Simple model, perform reasonably well and similar to each other. Forward and Stepwise have the exact same performance, in this case they both selected the same model, which is not uncommon given that Stepwise is a modified version of forward selection (it means that the stepwise selection did not remove any variables once they were added, so it behaved the same as forward selection).
 
 Our custom model performs marginally better, with 1% higher Specificity (properly predicting true negatives), with slightly higher accuracy than the rest of the models
-```{r}
+```{r full model}
 #fit model with all data
 custom.mod.full <- glm(WINorLOSS~ Home + PTS + FGA + `FG%` + `3PA` + `3P%` + FTA + `FT%` + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = cleandata)
 summary(custom.mod.full)
@@ -232,9 +232,17 @@ cm.custom.full <- confusionMatrix(custom.pred.full2, factor(cleandata$WINorLOSS,
 cm.custom.full
 
 ```
+Calculate leverage and influence plots to check assumptions are met
+```{r assumptions}
+library(blorr)
+blr_plot_diag_fit(custom.mod.full)
+blr_plot_diag_leverage(custom.mod.full)
+blr_plot_diag_influence(custom.mod.full)
+```
+
 create table with interpretable values on odds ratio scale
 
-```{r}
+```{r interpretation table}
 ## p hat probably doesn't make sense in this context, will remove
 data.frame("coefficient" = coef(custom.mod.full),
            "Odds Ratio" = exp(coef(custom.mod.full)),
@@ -245,4 +253,10 @@ data.frame("coefficient" = coef(custom.mod.full),
   column_spec(1:2, width = "0.5in")
 
 ```
+## Objective 2
+Creating a complex model introducing interactions
+```{r}
+
+```
+
 
