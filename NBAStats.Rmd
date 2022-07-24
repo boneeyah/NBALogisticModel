@@ -167,23 +167,19 @@ train.x <- model.matrix(WINorLOSS~.-1, data = train) #-1 removes intercept colum
 train.y <- train[,1]
 
 cvfit <- cv.glmnet(train.x, train.y, family = "binomial", type.measure = "class")
-plot(cvfit)
 
-coef(cvfit, s= "lambda.min")
-cvfit$lambda.min # this is the optimal LASSO penalty value
+coef(cvfit)
 
-lasso.mod <- glmnet(train.x, train.y, family = "binomial", lambda = cvfit$lambda.min)
+lasso.mod <- glm(WINorLOSS~ Game + Home + PTS + FGA + `FG%` + `3P` + `3P%` + `FT%` + ORB + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = train)
 
-coef(lasso.mod)
-
-test.x <- model.matrix(WINorLOSS~.-1, data = test)
-lasso.pred <- predict(lasso.mod, newx = test.x, type = "response")
+lasso.pred <- predict(lasso.mod, newdata = test, type = "response")
 lasso.pred <- ifelse(lasso.pred>.5, "W", "L")
 lasso.pred <- factor(lasso.pred, levels = c("W","L"))
 
 cm.lasso <- confusionMatrix(data = lasso.pred, reference = test$WINorLOSS)
 cm.lasso
 ```
+## will move this to obj 2 section
 Create a table with the results from all the confusion Matrix models
 ```{r perf met table}
 cm.df <- data.frame("Model" = c("Simple", "Forward", "Stepwise", "Backward", "Custom", "LASSO"),
@@ -195,12 +191,13 @@ cm.df <- kable(cm.df, format = "html") %>% kable_styling(latex_options = c("stri
   column_spec(1:2, width = "0.5in")
 cm.df
 ```
+## will move this to Obj 2 section
 ```{r roc plot}
 library(ROCR)
 
 custom.pred.roc <- prediction(predict(custom.mod, newdata = test, type = "response"), test$WINorLOSS)
 custom.roc <- performance(custom.pred.roc, "tpr", "fpr")
-lasso.pred.roc <- prediction(predict(lasso.mod, newx = test.x, type = "response"), test$WINorLOSS)
+lasso.pred.roc <- prediction(predict(lasso.mod, newdata = test, type = "response"), test$WINorLOSS)
 lasso.roc <- performance(lasso.pred.roc, "tpr", "fpr")
 step.pred.roc <- prediction(predict(step.mod, newdata = test, type = "response"), test$WINorLOSS)
 step.roc <- performance(step.pred.roc, "tpr", "fpr")
@@ -258,7 +255,7 @@ data.frame("coefficient" = coef(custom.mod.full),
 Creating a complex model introducing interactions
 Added team and Opp Categorical variables, largely increases complexity since they're categorical variables
 with 30 levels
-```{r}
+```{r complex model}
 complexdata <- rawdata[,c(7,2,3,5,6,8,10:25)]
 complexdata <- complexdata %>%  mutate(PTSsq = PTS^2, DIV = 2*((TRB + AST + 4*STL + 2*BLK)-(4*TOV + 2*PF)))
 train.complex <- complexdata[index,]
@@ -274,5 +271,51 @@ test.complex$WINorLOSS <- factor(test.complex$WINorLOSS, levels = c("W", "L"))
 
 cm.complex <- confusionMatrix(complex.pred, test.complex$WINorLOSS)
 cm.complex
+```
+LASSO fit
+```{r lasso 2}
+plot(cvfit)
+coef(cvfit, s= "lambda.min")
+
+paste("optimal LASSO penalty value",sprintf("%.10f",cvfit$lambda.min)) # this is the optimal LASSO penalty value
+
+lasso.mod2 <- glmnet(train.x, train.y, family = "binomial", lambda = cvfit$lambda.min)
+
+coef(lasso.mod2)
+
+test.x <- model.matrix(WINorLOSS~.-1, data = test)
+lasso.pred2 <- predict(lasso.mod2, newx = test.x, type = "response")
+lasso.pred2 <- ifelse(lasso.pred2>.5, "W", "L")
+lasso.pred2 <- factor(lasso.pred2, levels = c("W","L"))
+
+cm.lasso2 <- confusionMatrix(data = lasso.pred2, reference = test$WINorLOSS)
+cm.lasso2
+```
+
+Create QDA LDA models
+```{r LDA QDA}
+#new set with only numerical variables
+#removed colinear vars fg, 3p, ft
+numdata <- rawdata[,c(7,3,8,11,12,14,15,17:25)]
+train.num <- numdata[index,]
+test.num <- numdata[-index,]
+
+lda.mod <- lda(WINorLOSS~., data=train.num, prior = c(.5,.5))
+lda.pred <-  predict(lda.mod, test.num)
+
+cm.lda <- confusionMatrix(lda.pred$class, test.num$WINorLOSS)
+cm.lda
+
+qda.mod <- qda(WINorLOSS~., data=train.num, prior = c(.5,.5))
+qda.pred <- predict(qda.mod, test.num)
+
+cm.qda <- confusionMatrix(qda.pred$class, test.num$WINorLOSS)
+cm.qda
+```
+PCA might move this to an earlier point
+```{r PCA}
+PCA <-  prcomp(train.num[,-1], scale. = TRUE)
+PCA
+summary(PCA)
 ```
 

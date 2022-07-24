@@ -2,16 +2,16 @@
 library(tidyverse)
 ```
 
-    ## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──
+    ## -- Attaching packages --------------------------------------- tidyverse 1.3.1 --
 
-    ## ✔ ggplot2 3.3.5     ✔ purrr   0.3.4
-    ## ✔ tibble  3.1.6     ✔ dplyr   1.0.7
-    ## ✔ tidyr   1.1.4     ✔ stringr 1.4.0
-    ## ✔ readr   2.1.1     ✔ forcats 0.5.1
+    ## v ggplot2 3.3.5     v purrr   0.3.4
+    ## v tibble  3.1.6     v dplyr   1.0.8
+    ## v tidyr   1.2.0     v stringr 1.4.0
+    ## v readr   2.1.2     v forcats 0.5.1
 
-    ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-    ## ✖ dplyr::filter() masks stats::filter()
-    ## ✖ dplyr::lag()    masks stats::lag()
+    ## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
+    ## x dplyr::filter() masks stats::filter()
+    ## x dplyr::lag()    masks stats::lag()
 
 ``` r
 library(GGally)
@@ -36,6 +36,8 @@ library(MASS)
 library(caret)
 ```
 
+    ## Warning: package 'caret' was built under R version 4.1.3
+
     ## Loading required package: lattice
 
     ## 
@@ -48,6 +50,8 @@ library(caret)
 ``` r
 library(glmnet)
 ```
+
+    ## Warning: package 'glmnet' was built under R version 4.1.3
 
     ## Loading required package: Matrix
 
@@ -587,78 +591,38 @@ train.x <- model.matrix(WINorLOSS~.-1, data = train) #-1 removes intercept colum
 train.y <- train[,1]
 
 cvfit <- cv.glmnet(train.x, train.y, family = "binomial", type.measure = "class")
-plot(cvfit)
-```
 
-![](NBAStats_files/figure-markdown_github/lasso-1.png)
-
-``` r
-coef(cvfit, s= "lambda.min")
+coef(cvfit)
 ```
 
     ## 21 x 1 sparse Matrix of class "dgCMatrix"
     ##                        s1
-    ## (Intercept) -1.767853e+01
-    ## Game        -1.002832e-02
-    ## HomeAway    -3.730098e-01
-    ## HomeHome     2.651337e-14
-    ## PTS          4.255645e-02
+    ## (Intercept) -1.472382e+01
+    ## Game        -3.359168e-03
+    ## HomeAway    -2.139539e-01
+    ## HomeHome     2.240197e-14
+    ## PTS          2.881811e-02
     ## FG           .           
-    ## FGA         -1.903141e-01
-    ## `FG%`        2.629215e+01
-    ## `3P`         6.787991e-02
-    ## `3PA`       -1.848352e-03
-    ## `3P%`        3.033334e+00
+    ## FGA         -1.112889e-01
+    ## `FG%`        2.103736e+01
+    ## `3P`         2.938312e-02
+    ## `3PA`        .           
+    ## `3P%`        2.604816e+00
     ## FT           .           
-    ## FTA         -5.303693e-03
-    ## `FT%`        3.600350e+00
-    ## ORB         -3.091630e-02
-    ## TRB          3.611933e-01
-    ## AST          2.699783e-02
-    ## STL          3.867636e-01
-    ## BLK          1.159804e-01
-    ## TOV         -3.246846e-01
-    ## PF          -6.538609e-02
+    ## FTA          .           
+    ## `FT%`        2.104204e+00
+    ## ORB         -2.153702e-03
+    ## TRB          2.370588e-01
+    ## AST          7.047881e-03
+    ## STL          2.423032e-01
+    ## BLK          7.665650e-02
+    ## TOV         -2.013300e-01
+    ## PF          -4.424970e-02
 
 ``` r
-cvfit$lambda.min # this is the optimal LASSO penalty value
-```
+lasso.mod <- glm(WINorLOSS~ Game + Home + PTS + FGA + `FG%` + `3P` + `3P%` + `FT%` + ORB + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = train)
 
-    ## [1] 0.0008531947
-
-``` r
-lasso.mod <- glmnet(train.x, train.y, family = "binomial", lambda = cvfit$lambda.min)
-
-coef(lasso.mod)
-```
-
-    ## 21 x 1 sparse Matrix of class "dgCMatrix"
-    ##                        s0
-    ## (Intercept) -1.609676e+01
-    ## Game        -1.004130e-02
-    ## HomeAway    -3.732512e-01
-    ## HomeHome     1.572842e-15
-    ## PTS          5.989892e-02
-    ## FG           .           
-    ## FGA         -2.061993e-01
-    ## `FG%`        2.339709e+01
-    ## `3P`         4.957543e-02
-    ## `3PA`       -1.406527e-03
-    ## `3P%`        3.054570e+00
-    ## FT           .           
-    ## FTA         -1.855439e-02
-    ## `FT%`        3.238121e+00
-    ## ORB         -3.065572e-02
-    ## TRB          3.615629e-01
-    ## AST          2.687960e-02
-    ## STL          3.870225e-01
-    ## BLK          1.160526e-01
-    ## TOV         -3.250018e-01
-    ## PF          -6.534351e-02
-
-``` r
-test.x <- model.matrix(WINorLOSS~.-1, data = test)
-lasso.pred <- predict(lasso.mod, newx = test.x, type = "response")
+lasso.pred <- predict(lasso.mod, newdata = test, type = "response")
 lasso.pred <- ifelse(lasso.pred>.5, "W", "L")
 lasso.pred <- factor(lasso.pred, levels = c("W","L"))
 
@@ -670,29 +634,31 @@ cm.lasso
     ## 
     ##           Reference
     ## Prediction   W   L
-    ##          W 867 162
-    ##          L 149 790
+    ##          W 866 162
+    ##          L 150 790
     ##                                           
-    ##                Accuracy : 0.842           
-    ##                  95% CI : (0.8251, 0.8578)
+    ##                Accuracy : 0.8415          
+    ##                  95% CI : (0.8246, 0.8573)
     ##     No Information Rate : 0.5163          
     ##     P-Value [Acc > NIR] : <2e-16          
     ##                                           
-    ##                   Kappa : 0.6835          
+    ##                   Kappa : 0.6825          
     ##                                           
-    ##  Mcnemar's Test P-Value : 0.4962          
+    ##  Mcnemar's Test P-Value : 0.5334          
     ##                                           
-    ##             Sensitivity : 0.8533          
+    ##             Sensitivity : 0.8524          
     ##             Specificity : 0.8298          
-    ##          Pos Pred Value : 0.8426          
-    ##          Neg Pred Value : 0.8413          
+    ##          Pos Pred Value : 0.8424          
+    ##          Neg Pred Value : 0.8404          
     ##              Prevalence : 0.5163          
-    ##          Detection Rate : 0.4405          
-    ##    Detection Prevalence : 0.5229          
-    ##       Balanced Accuracy : 0.8416          
+    ##          Detection Rate : 0.4400          
+    ##    Detection Prevalence : 0.5224          
+    ##       Balanced Accuracy : 0.8411          
     ##                                           
     ##        'Positive' Class : W               
     ## 
+
+## will move this to obj 2 section
 
 Create a table with the results from all the confusion Matrix models
 
@@ -800,10 +766,10 @@ Custom
 LASSO
 </td>
 <td style="text-align:right;width: 0.5in; ">
-0.8419715
+0.8414634
 </td>
 <td style="text-align:right;">
-0.8533465
+0.8523622
 </td>
 <td style="text-align:right;">
 0.8298319
@@ -812,12 +778,18 @@ LASSO
 </tbody>
 </table>
 
+## will move this to Obj 2 section
+
 ``` r
 library(ROCR)
+```
 
+    ## Warning: package 'ROCR' was built under R version 4.1.3
+
+``` r
 custom.pred.roc <- prediction(predict(custom.mod, newdata = test, type = "response"), test$WINorLOSS)
 custom.roc <- performance(custom.pred.roc, "tpr", "fpr")
-lasso.pred.roc <- prediction(predict(lasso.mod, newx = test.x, type = "response"), test$WINorLOSS)
+lasso.pred.roc <- prediction(predict(lasso.mod, newdata = test, type = "response"), test$WINorLOSS)
 lasso.roc <- performance(lasso.pred.roc, "tpr", "fpr")
 step.pred.roc <- prediction(predict(step.mod, newdata = test, type = "response"), test$WINorLOSS)
 step.roc <- performance(step.pred.roc, "tpr", "fpr")
@@ -933,6 +905,11 @@ Calculate leverage and influence plots to check assumptions are met
 
 ``` r
 library(blorr)
+```
+
+    ## Warning: package 'blorr' was built under R version 4.1.3
+
+``` r
 blr_plot_diag_fit(custom.mod.full)
 ```
 
@@ -1292,3 +1269,273 @@ cm.complex
     ##                                          
     ##        'Positive' Class : W              
     ## 
+
+LASSO fit
+
+``` r
+plot(cvfit)
+```
+
+![](NBAStats_files/figure-markdown_github/lasso%202-1.png)
+
+``` r
+coef(cvfit, s= "lambda.min")
+```
+
+    ## 21 x 1 sparse Matrix of class "dgCMatrix"
+    ##                        s1
+    ## (Intercept) -1.767853e+01
+    ## Game        -1.002832e-02
+    ## HomeAway    -3.730098e-01
+    ## HomeHome     2.068702e-14
+    ## PTS          4.255645e-02
+    ## FG           .           
+    ## FGA         -1.903141e-01
+    ## `FG%`        2.629215e+01
+    ## `3P`         6.787991e-02
+    ## `3PA`       -1.848352e-03
+    ## `3P%`        3.033334e+00
+    ## FT           .           
+    ## FTA         -5.303693e-03
+    ## `FT%`        3.600350e+00
+    ## ORB         -3.091630e-02
+    ## TRB          3.611933e-01
+    ## AST          2.699783e-02
+    ## STL          3.867636e-01
+    ## BLK          1.159804e-01
+    ## TOV         -3.246846e-01
+    ## PF          -6.538609e-02
+
+``` r
+paste("optimal LASSO penalty value",sprintf("%.10f",cvfit$lambda.min)) # this is the optimal LASSO penalty value
+```
+
+    ## [1] "optimal LASSO penalty value 0.0008531947"
+
+``` r
+lasso.mod2 <- glmnet(train.x, train.y, family = "binomial", lambda = cvfit$lambda.min)
+
+coef(lasso.mod2)
+```
+
+    ## 21 x 1 sparse Matrix of class "dgCMatrix"
+    ##                        s0
+    ## (Intercept) -1.609676e+01
+    ## Game        -1.004130e-02
+    ## HomeAway    -3.732512e-01
+    ## HomeHome     2.150742e-15
+    ## PTS          5.989892e-02
+    ## FG           .           
+    ## FGA         -2.061993e-01
+    ## `FG%`        2.339709e+01
+    ## `3P`         4.957543e-02
+    ## `3PA`       -1.406527e-03
+    ## `3P%`        3.054570e+00
+    ## FT           .           
+    ## FTA         -1.855439e-02
+    ## `FT%`        3.238121e+00
+    ## ORB         -3.065572e-02
+    ## TRB          3.615629e-01
+    ## AST          2.687960e-02
+    ## STL          3.870225e-01
+    ## BLK          1.160526e-01
+    ## TOV         -3.250018e-01
+    ## PF          -6.534351e-02
+
+``` r
+test.x <- model.matrix(WINorLOSS~.-1, data = test)
+lasso.pred2 <- predict(lasso.mod2, newx = test.x, type = "response")
+lasso.pred2 <- ifelse(lasso.pred2>.5, "W", "L")
+lasso.pred2 <- factor(lasso.pred2, levels = c("W","L"))
+
+cm.lasso2 <- confusionMatrix(data = lasso.pred2, reference = test$WINorLOSS)
+cm.lasso2
+```
+
+    ## Confusion Matrix and Statistics
+    ## 
+    ##           Reference
+    ## Prediction   W   L
+    ##          W 867 162
+    ##          L 149 790
+    ##                                           
+    ##                Accuracy : 0.842           
+    ##                  95% CI : (0.8251, 0.8578)
+    ##     No Information Rate : 0.5163          
+    ##     P-Value [Acc > NIR] : <2e-16          
+    ##                                           
+    ##                   Kappa : 0.6835          
+    ##                                           
+    ##  Mcnemar's Test P-Value : 0.4962          
+    ##                                           
+    ##             Sensitivity : 0.8533          
+    ##             Specificity : 0.8298          
+    ##          Pos Pred Value : 0.8426          
+    ##          Neg Pred Value : 0.8413          
+    ##              Prevalence : 0.5163          
+    ##          Detection Rate : 0.4405          
+    ##    Detection Prevalence : 0.5229          
+    ##       Balanced Accuracy : 0.8416          
+    ##                                           
+    ##        'Positive' Class : W               
+    ## 
+
+Create QDA LDA models
+
+``` r
+#new set with only numerical variables
+#removed colinear vars fg, 3p, ft
+numdata <- rawdata[,c(7,3,8,11,12,14,15,17:25)]
+train.num <- numdata[index,]
+test.num <- numdata[-index,]
+
+lda.mod <- lda(WINorLOSS~., data=train.num, prior = c(.5,.5))
+lda.pred <-  predict(lda.mod, test.num)
+
+cm.lda <- confusionMatrix(lda.pred$class, test.num$WINorLOSS)
+cm.lda
+```
+
+    ## Confusion Matrix and Statistics
+    ## 
+    ##           Reference
+    ## Prediction   L   W
+    ##          L 792 163
+    ##          W 160 853
+    ##                                          
+    ##                Accuracy : 0.8359         
+    ##                  95% CI : (0.8188, 0.852)
+    ##     No Information Rate : 0.5163         
+    ##     P-Value [Acc > NIR] : <2e-16         
+    ##                                          
+    ##                   Kappa : 0.6714         
+    ##                                          
+    ##  Mcnemar's Test P-Value : 0.9114         
+    ##                                          
+    ##             Sensitivity : 0.8319         
+    ##             Specificity : 0.8396         
+    ##          Pos Pred Value : 0.8293         
+    ##          Neg Pred Value : 0.8421         
+    ##              Prevalence : 0.4837         
+    ##          Detection Rate : 0.4024         
+    ##    Detection Prevalence : 0.4853         
+    ##       Balanced Accuracy : 0.8357         
+    ##                                          
+    ##        'Positive' Class : L              
+    ## 
+
+``` r
+qda.mod <- qda(WINorLOSS~., data=train.num, prior = c(.5,.5))
+qda.pred <- predict(qda.mod, test.num)
+
+cm.qda <- confusionMatrix(qda.pred$class, test.num$WINorLOSS)
+cm.qda
+```
+
+    ## Confusion Matrix and Statistics
+    ## 
+    ##           Reference
+    ## Prediction   L   W
+    ##          L 783 172
+    ##          W 169 844
+    ##                                           
+    ##                Accuracy : 0.8267          
+    ##                  95% CI : (0.8093, 0.8432)
+    ##     No Information Rate : 0.5163          
+    ##     P-Value [Acc > NIR] : <2e-16          
+    ##                                           
+    ##                   Kappa : 0.6531          
+    ##                                           
+    ##  Mcnemar's Test P-Value : 0.9138          
+    ##                                           
+    ##             Sensitivity : 0.8225          
+    ##             Specificity : 0.8307          
+    ##          Pos Pred Value : 0.8199          
+    ##          Neg Pred Value : 0.8332          
+    ##              Prevalence : 0.4837          
+    ##          Detection Rate : 0.3979          
+    ##    Detection Prevalence : 0.4853          
+    ##       Balanced Accuracy : 0.8266          
+    ##                                           
+    ##        'Positive' Class : L               
+    ## 
+
+PCA might move this to an earlier point
+
+``` r
+PCA <-  prcomp(train.num[,-1], scale. = TRUE)
+PCA
+```
+
+    ## Standard deviations (1, .., p=15):
+    ##  [1] 1.66933130 1.49371991 1.21702880 1.06601735 1.06241926 1.00882589
+    ##  [7] 0.99279172 0.97962383 0.94705682 0.88963044 0.76980762 0.60327791
+    ## [13] 0.60008146 0.51205055 0.07495786
+    ## 
+    ## Rotation (n x k) = (15 x 15):
+    ##              PC1          PC2          PC3         PC4          PC5
+    ## Game -0.05642841  0.064223814  0.252484331 -0.07701850  0.133429339
+    ## PTS  -0.48811529  0.278879519 -0.176513046 -0.03966821  0.214085103
+    ## FGA   0.04285344  0.565406734  0.215221508  0.15141348  0.097594436
+    ## FG%  -0.52170561 -0.085198486 -0.063773795 -0.14886525 -0.068863339
+    ## 3PA  -0.11885834  0.270483215  0.139759968  0.38113424 -0.039852954
+    ## 3P%  -0.41732361 -0.032229467 -0.012016011 -0.14785264 -0.085672805
+    ## FTA   0.01584157  0.004919354 -0.589859060 -0.13366285  0.423304035
+    ## FT%  -0.09108730 -0.034136877 -0.003950874  0.01543189  0.256735077
+    ## ORB   0.24407365  0.472129525 -0.122518467 -0.09819936 -0.004999932
+    ## TRB   0.15291514  0.472858085 -0.152925036 -0.33499073 -0.173827085
+    ## AST  -0.44580676  0.200318480  0.115337446  0.03285249 -0.181096101
+    ## STL  -0.05730968  0.064960695 -0.120812543  0.63595889 -0.190724348
+    ## BLK  -0.02447418  0.109259993 -0.087717385 -0.38184467 -0.410041593
+    ## TOV   0.03292279 -0.080648088 -0.421569881  0.14221046 -0.606818215
+    ## PF   -0.03234249  0.080487400 -0.485149582  0.26223273  0.179708572
+    ##               PC6          PC7         PC8         PC9        PC10        PC11
+    ## Game -0.460600683  0.473139530 -0.51258290  0.31156681  0.31790217  0.09084655
+    ## PTS   0.001271391  0.063223592  0.03059282 -0.03779427 -0.09545737 -0.07558954
+    ## FGA   0.044129771 -0.060039573  0.15800826 -0.09785335  0.20743207  0.01132910
+    ## FG%  -0.117340159 -0.025186116  0.02358264 -0.15344926  0.09445835 -0.26123533
+    ## 3PA   0.220728065 -0.133871581 -0.21569362  0.57412068 -0.47152198  0.01380061
+    ## 3P%  -0.022165522 -0.192246097 -0.12519416 -0.12355555 -0.11414988  0.80866272
+    ## FTA  -0.230236261  0.192731030  0.08416054  0.16628772 -0.36557174 -0.07005308
+    ## FT%   0.730815465  0.501236431 -0.23178735 -0.23662921  0.05543544  0.02862068
+    ## ORB  -0.112317111 -0.011811986 -0.09101874 -0.29947141 -0.01090606  0.15961756
+    ## TRB   0.016873262  0.008102635 -0.18463235 -0.10723107 -0.11370963 -0.07670105
+    ## AST  -0.038030923 -0.042180030  0.03197128 -0.03326981  0.08821239 -0.37861313
+    ## STL  -0.248600754  0.459514088  0.31990185 -0.21984030 -0.05694223  0.18351247
+    ## BLK   0.199993575  0.347198118  0.46827689  0.46637394  0.15054453  0.15129144
+    ## TOV   0.046435304  0.045000091 -0.47053835 -0.07425080 -0.01142276 -0.12103712
+    ## PF    0.132343803 -0.298211724 -0.03704006  0.25732109  0.64724794  0.10901296
+    ##              PC12         PC13         PC14          PC15
+    ## Game  0.005275483 -0.003728542  0.004662583  0.0003193939
+    ## PTS   0.310255400 -0.049438489  0.170984115  0.6754847319
+    ## FGA   0.129590961 -0.071825741  0.602791982 -0.3621413818
+    ## FG%   0.463440423 -0.102986298 -0.286356996 -0.5162738407
+    ## 3PA   0.127502588  0.035058901 -0.209572832 -0.1400574923
+    ## 3P%  -0.187178785 -0.015753050  0.099499999 -0.1221406447
+    ## FTA  -0.199067340  0.109548614  0.206860266 -0.3112562793
+    ## FT%  -0.076149460  0.042271852 -0.057434831 -0.1206089484
+    ## ORB   0.190169850  0.617008729 -0.373701151  0.0026612284
+    ## TRB  -0.224041024 -0.643170355 -0.242003335  0.0047415947
+    ## AST  -0.674808841  0.317751921 -0.033549540 -0.0028844794
+    ## STL  -0.061374168 -0.191786660 -0.189681077  0.0033172289
+    ## BLK   0.084691345  0.125330802  0.008021422  0.0002770348
+    ## TOV   0.128485411  0.113414608  0.388550949 -0.0037698458
+    ## PF   -0.079055184 -0.076320108 -0.197773632  0.0032573572
+
+``` r
+summary(PCA)
+```
+
+    ## Importance of components:
+    ##                           PC1    PC2     PC3     PC4     PC5     PC6     PC7
+    ## Standard deviation     1.6693 1.4937 1.21703 1.06602 1.06242 1.00883 0.99279
+    ## Proportion of Variance 0.1858 0.1487 0.09874 0.07576 0.07525 0.06785 0.06571
+    ## Cumulative Proportion  0.1858 0.3345 0.43327 0.50903 0.58428 0.65213 0.71783
+    ##                            PC8     PC9    PC10    PC11    PC12    PC13    PC14
+    ## Standard deviation     0.97962 0.94706 0.88963 0.76981 0.60328 0.60008 0.51205
+    ## Proportion of Variance 0.06398 0.05979 0.05276 0.03951 0.02426 0.02401 0.01748
+    ## Cumulative Proportion  0.78181 0.84161 0.89437 0.93388 0.95814 0.98215 0.99963
+    ##                           PC15
+    ## Standard deviation     0.07496
+    ## Proportion of Variance 0.00037
+    ## Cumulative Proportion  1.00000
