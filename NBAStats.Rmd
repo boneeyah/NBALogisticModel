@@ -20,6 +20,7 @@ library(caret)
 library(glmnet)
 library(kableExtra)
 library(DescTools)
+library(epitools)
 ```
 
 ## load data
@@ -145,10 +146,11 @@ cm.bkw <- confusionMatrix(data = bkw.pred, reference = test$WINorLOSS)
 The variable Game, probably does not make sense in the context of our dataset without an interaction. Since for any given game there are exactly the same number of wins and losses (each match has one winner and one loser).
 We will therefore fit a new model without Game for our no interaction model, keeping in mind that there might be potential interactions between Game and other variables which might make for a better more complex model in Objective 2.
 From correlation scatterplot and heatmap there is some evidence of potential colinearity between TRB and ORB. Coupled with context knowledge that Offensive rebounds are one of two values that go into total rebounds, we decided to fit the model without ORB.
-Also added FG% and FT% based on domain knowledge of efficiency
+
+Fitting a custom model without ORB and without Game variable
 
 ```{r}
-custom.mod <- glm(WINorLOSS~ Home + PTS + FGA + `FG%` + `3PA` + `3P%` + FTA + `FT%` + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = train)
+custom.mod <- glm(WINorLOSS~ Home + PTS + FGA + `3PA` + `3P%` + FTA + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = train)
 summary(custom.mod)
 
 custom.pred <- predict(custom.mod, newdata = test, type = "response")
@@ -192,10 +194,55 @@ cm.df <- kable(cm.df, format = "html") %>% kable_styling(latex_options = c("stri
   column_spec(1:2, width = "0.5in")
 cm.df
 ```
+```{r}
+library(ROCR)
+
+custom.pred.roc <- prediction(predict(custom.mod, newdata = test, type = "response"), test$WINorLOSS)
+custom.roc <- performance(custom.pred.roc, "tpr", "fpr")
+lasso.pred.roc <- prediction(predict(lasso.mod, newx = test.x, type = "response"), test$WINorLOSS)
+lasso.roc <- performance(lasso.pred.roc, "tpr", "fpr")
+step.pred.roc <- prediction(predict(step.mod, newdata = test, type = "response"), test$WINorLOSS)
+step.roc <- performance(step.pred.roc, "tpr", "fpr")
+bkw.pred.roc <- prediction(predict(bkw.mod, newdata = test, type = "response"), test$WINorLOSS)
+bkw.roc <- performance(bkw.pred.roc, "tpr", "fpr")
+simple.pred.roc <- prediction(predict(simple.mod, newdata = test, type = "response"), test$WINorLOSS)
+simple.roc <- performance(simple.pred.roc, "tpr", "fpr")
+
+plot(simple.roc, col = "black", lwd = 1)
+plot(bkw.roc, col = "red", lwd = 1, add = TRUE)
+plot(step.roc, col = "blue", lwd = 1, add = TRUE)
+plot(lasso.roc, col = "orange", lwd = 1, add =TRUE)
+plot(custom.roc, col = "green", lwd = 1, add = TRUE)
+legend(x = .75, y = .4, legend = c("simple", "backwards", "stepwise", "lasso", "custom"), col = c("black", "red", "blue", "orange", "green"), lty =1)
+```
+
 All the models, with the exception of the Simple model, perform reasonably well and similar to each other. Forward and Stepwise have the exact same performance, in this case they both selected the same model, which is not uncommon given that Stepwise is a modified version of forward selection (it means that the stepwise selection did not remove any variables once they were added, so it behaved the same as forward selection).
 
 Our custom model performs marginally better, with 1% higher Specificity (properly predicting true negatives), with slightly higher accuracy than the rest of the models
 ```{r}
+#fit model with all data
+custom.mod.full <- glm(WINorLOSS~ Home + PTS + FGA + `FG%` + `3PA` + `3P%` + FTA + `FT%` + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = cleandata)
+summary(custom.mod.full)
+
+custom.pred.full <- custom.mod.full$fitted.values
+custom.pred.full2 <- ifelse(custom.pred.full>.5, "W", "L")
+custom.pred.full2 <- factor(custom.pred.full2, levels = c("W","L"))
+
+cm.custom.full <- confusionMatrix(custom.pred.full2, factor(cleandata$WINorLOSS, levels = c("W","L")))
+cm.custom.full
+
+```
+create table with interpretable values on odds ratio scale
+
+```{r}
+## p hat probably doesn't make sense in this context, will remove
+data.frame("coefficient" = coef(custom.mod.full),
+           "Odds Ratio" = exp(coef(custom.mod.full)),
+           exp(confint.default(custom.mod.full, level = .95))) %>% 
+  kable(format = "html", col.names = c("Coefficient", "Odds Ratio", "2.5%", "97.5%")) %>% 
+  kable_styling(latex_options = c("striped", "scale_down"), full_width = FALSE) %>% 
+  row_spec(row = 0, italic = T, background = "#21918c", color = "white") %>% 
+  column_spec(1:2, width = "0.5in")
 
 ```
 
