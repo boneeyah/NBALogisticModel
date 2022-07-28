@@ -21,6 +21,12 @@ library(glmnet)
 library(kableExtra)
 library(DescTools)
 library(epitools)
+library(lattice)
+library(reshape2)
+library(ggthemes)
+library(ROCR)
+library(blorr)
+library(randomForest)
 ```
 
 ## load data
@@ -85,9 +91,7 @@ plot(AST~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
 ##correlation plot
 build a heatmap to check for correlation between explanatory variables
 ```{r heatmap}
-library(lattice)
-library(reshape2)
-library(ggthemes)
+
 cleandata.corr <- round(cor(cleandata[,c(2,4:20)]),2)
 cleandata.corr <- melt(cleandata.corr)
 
@@ -108,12 +112,15 @@ coef(simple.mod)
 summary(simple.mod)
 
 simple.pred <- predict(simple.mod, newdata = test, type = "response")
+simple.auc <- performance(prediction(simple.pred, test$WINorLOSS), "auc")
+simple.auc <- simple.auc@y.values[[1]]
 simple.pred <- ifelse(simple.pred > .5, "W", "L")
 simple.pred <- factor(simple.pred, levels = c("W","L"))
 test$WINorLOSS <- factor(test$WINorLOSS, levels = c("W", "L"))
 
 
 cm.simple <- confusionMatrix(data =simple.pred, reference = test$WINorLOSS)
+cm.simple
 ```
 now adding feature selection to see if the model can improve with the table in it's present format
 ```{r fwd bkw and step}
@@ -123,6 +130,8 @@ step.mod <- empty.mod %>% stepAIC(direction = "both", scope = list(lower = empty
 summary(step.mod)
 
 step.pred <- predict(step.mod, newdata = test, type = "response")
+step.auc <- performance(prediction(step.pred, test$WINorLOSS),"auc")
+step.auc <- step.auc@y.values[[1]]
 step.pred <- ifelse(step.pred>.5, "W", "L")
 step.pred <- factor(step.pred, levels = c("W","L"))
 
@@ -131,6 +140,8 @@ cm.step <- confusionMatrix(data = step.pred, reference = test$WINorLOSS)
 fwd.mod <- empty.mod %>% stepAIC(direction = "forward", scope = list(lower = empty.mod, upper=~Game + Home + PTS + FG + FGA + `FG%` + `3P` + `3PA` + `3P%` + FT + FTA + `FT%` + ORB + TRB + AST + STL + BLK + TOV + PF),trace = FALSE)
 summary(fwd.mod)
 fwd.pred <- predict(fwd.mod, newdata = test, type = "response")
+fwd.auc <- performance(prediction(fwd.pred, test$WINorLOSS), "auc")
+fwd.auc <- fwd.auc@y.values[[1]]
 fwd.pred <- ifelse(fwd.pred>.5, "W", "L")
 fwd.pred <- factor(fwd.pred, levels = c("W","L"))
 
@@ -139,6 +150,8 @@ cm.fwd <- confusionMatrix(data = fwd.pred, reference = test$WINorLOSS)
 bkw.mod <- full.mod %>% stepAIC(direction = "backward", trace = FALSE)
 summary(bkw.mod)
 bkw.pred <- predict(bkw.mod, newdata = test, type = "response")
+bkw.auc <- performance(prediction(bkw.pred, test$WINorLOSS), "auc")
+bkw.auc <- bkw.auc@y.values[[1]]
 bkw.pred <- ifelse(bkw.pred>.5, "W", "L")
 bkw.pred <- factor(bkw.pred, levels = c("W","L"))
 
@@ -155,6 +168,8 @@ custom.mod <- glm(WINorLOSS~ Home + PTS + FGA + `3PA` + `3P%` + FTA + TRB + AST 
 summary(custom.mod)
 
 custom.pred <- predict(custom.mod, newdata = test, type = "response")
+custom.auc <- performance(prediction(custom.pred, test$WINorLOSS), "auc")
+custom.auc <- custom.auc@y.values[[1]]
 custom.pred <- ifelse(custom.pred>.5, "W", "L")
 custom.pred <- factor(custom.pred, levels = c("W","L"))
 
@@ -173,6 +188,8 @@ coef(cvfit)
 lasso.mod <- glm(WINorLOSS~ Game + Home + PTS + FGA + `FG%` + `3P` + `3P%` + `FT%` + ORB + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = train)
 
 lasso.pred <- predict(lasso.mod, newdata = test, type = "response")
+lasso.auc <- performance(prediction(lasso.pred, test$WINorLOSS), "auc")
+lasso.auc <- lasso.auc@y.values[[1]]
 lasso.pred <- ifelse(lasso.pred>.5, "W", "L")
 lasso.pred <- factor(lasso.pred, levels = c("W","L"))
 
@@ -186,7 +203,8 @@ Create a table with the results from all the confusion Matrix models
 cm.df <- data.frame("Model" = c("Simple", "Forward", "Stepwise", "Backward", "Custom", "LASSO"),
            "Accuracy"= c(cm.simple$overall[1],cm.fwd$overall[1], cm.step$overall[1],cm.bkw$overall[1], cm.custom$overall[1],cm.lasso$overall[1]),
            "Sensitivity"=c(cm.simple$byClass[1],cm.fwd$byClass[1], cm.step$byClass[1], cm.bkw$byClass[1], cm.custom$byClass[1], cm.lasso$byClass[1]),
-           "Specificty" = c(cm.simple$byClass[2],cm.fwd$byClass[2], cm.step$byClass[2],cm.bkw$byClass[2], cm.custom$byClass[2], cm.lasso$byClass[2]))
+           "Specificty" = c(cm.simple$byClass[2],cm.fwd$byClass[2], cm.step$byClass[2],cm.bkw$byClass[2], cm.custom$byClass[2], cm.lasso$byClass[2]),
+           "AUC" = c(simple.auc, fwd.auc, step.auc, bkw.auc, custom.auc, lasso.auc))
 cm.df <- kable(cm.df, format = "html") %>% kable_styling(latex_options = c("striped", "scale_down"), full_width = FALSE) %>% 
   row_spec(row = 0, italic = T, background = "#21918c", color = "white") %>% 
   column_spec(1:2, width = "0.5in")
@@ -195,10 +213,11 @@ cm.df
 ## will move this to Obj 2 section
 ## need to add new models to this curve
 ```{r roc plot}
-library(ROCR)
+
 
 custom.pred.roc <- prediction(predict(custom.mod, newdata = test, type = "response"), test$WINorLOSS)
 custom.roc <- performance(custom.pred.roc, "tpr", "fpr")
+
 lasso.pred.roc <- prediction(predict(lasso.mod, newdata = test, type = "response"), test$WINorLOSS)
 lasso.roc <- performance(lasso.pred.roc, "tpr", "fpr")
 step.pred.roc <- prediction(predict(step.mod, newdata = test, type = "response"), test$WINorLOSS)
@@ -208,12 +227,12 @@ bkw.roc <- performance(bkw.pred.roc, "tpr", "fpr")
 simple.pred.roc <- prediction(predict(simple.mod, newdata = test, type = "response"), test$WINorLOSS)
 simple.roc <- performance(simple.pred.roc, "tpr", "fpr")
 
-plot(simple.roc, col = "black", lwd = 1)
-plot(bkw.roc, col = "red", lwd = 1, add = TRUE)
-plot(step.roc, col = "blue", lwd = 1, add = TRUE)
-plot(lasso.roc, col = "orange", lwd = 1, add =TRUE)
-plot(custom.roc, col = "green", lwd = 1, add = TRUE)
-legend(x = .75, y = .4, legend = c("simple", "backwards", "stepwise", "lasso", "custom"), col = c("black", "red", "blue", "orange", "green"), lty =1)
+plot(simple.roc, col = "#5ec962", lwd = 1)
+plot(bkw.roc, col = "#3b528b", lwd = 1, add = TRUE)
+plot(step.roc, col = "#21918c", lwd = 1, add = TRUE)
+plot(lasso.roc, col = "#fde725", lwd = 1, add =TRUE)
+plot(custom.roc, col = "#440154", lwd = 1, add = TRUE)
+legend(x = .75, y = .4, legend = c("simple", "backwards", "stepwise", "lasso", "custom"), col = c("#5ec962", "#3b528b", "#21918c", "#fde725", "#440154"), lty =1)
 ```
 
 All the models, with the exception of the Simple model, perform reasonably well and similar to each other. Forward and Stepwise have the exact same performance, in this case they both selected the same model, which is not uncommon given that Stepwise is a modified version of forward selection (it means that the stepwise selection did not remove any variables once they were added, so it behaved the same as forward selection).
@@ -234,7 +253,7 @@ cm.custom.full
 ```
 Calculate leverage and influence plots to check assumptions are met
 ```{r assumptions}
-library(blorr)
+
 blr_plot_diag_fit(custom.mod.full)
 blr_plot_diag_leverage(custom.mod.full)
 blr_plot_diag_influence(custom.mod.full)
@@ -267,6 +286,8 @@ complex.mod <- glm(formula = WINorLOSS ~ Team + Home + Opp + PTS + FGA +
                      `FG%` + `3P%` + `3PA` + FTA + `FT%` + TRB + AST + 
                      STL + BLK + TOV + PF + Team:STL, family = "binomial", data = train.complex)
 complex.pred <- predict(complex.mod, test.complex, type = "response")
+complex.auc <- performance(prediction(complex.pred, test.complex$WINorLOSS),"auc")
+complex.auc <- complex.auc@y.values[[1]]
 complex.pred <- ifelse(complex.pred>.5, "W", "L")
 complex.pred <- factor(complex.pred, levels = c("W", "L"))
 test.complex$WINorLOSS <- factor(test.complex$WINorLOSS, levels = c("W", "L"))
@@ -291,6 +312,8 @@ coef(lasso.mod2)
 
 test.complex.x <- model.matrix(WINorLOSS~.-1, data = test.complex)
 lasso.pred2 <- predict(lasso.mod2, newx = test.complex.x, type = "response")
+lasso.auc2 <- performance(prediction(lasso.pred2,test.complex$WINorLOSS),"auc")
+lasso.auc2 <- lasso.auc2@y.values[[1]]
 lasso.pred2 <- ifelse(lasso.pred2>.5, "W", "L")
 lasso.pred2 <- factor(lasso.pred2, levels = c("W","L"))
 
@@ -308,12 +331,16 @@ test.num <- numdata[-index,]
 
 lda.mod <- lda(WINorLOSS~., data=train.num, prior = c(.5,.5))
 lda.pred <-  predict(lda.mod, test.num)
+lda.auc <- performance(prediction(lda.pred$posterior[,2],test.num$WINorLOSS),"auc")
+lda.auc <- lda.auc@y.values[[1]]
 
 cm.lda <- confusionMatrix(lda.pred$class, test.num$WINorLOSS)
 cm.lda
 
 qda.mod <- qda(WINorLOSS~., data=train.num, prior = c(.5,.5))
 qda.pred <- predict(qda.mod, test.num)
+qda.auc <- performance(prediction(qda.pred$posterior[,2],test.num$WINorLOSS),"auc")
+qda.auc <- qda.auc@y.values[[1]]
 
 cm.qda <- confusionMatrix(qda.pred$class, test.num$WINorLOSS)
 cm.qda
@@ -328,7 +355,7 @@ summary(PCA)
 finding the tuning parameter mtry takes the longest from running this code
 it can be skipped to run this much faster
 ```{r}
-library(randomForest)
+
 train.expl <- train.complex[,2:24]
 train.resp <- train.complex[,1]
 
@@ -339,8 +366,10 @@ train(train.expl, train.resp, method = "rf") # this takes 10+ minutes to run, # 
 rfdata <- complexdata %>% rename("FGp" = "FG%", "3P","ThP" = "3P", "ThPA" = "3PA", "ThPp" = "3P%", "FTp" = "FT%")
 train.rf <- rfdata[index,]
 test.rf <- rfdata[-index,]
-rf.mod <- randomForest(WINorLOSS~., data = train.rf, mtry = 12, ntree =300, cutoff = c(.45,.55))
+rf.mod <- randomForest(WINorLOSS~., data = train.rf, mtry = 12, ntree =1000, cutoff = c(.45,.55))
 rf.pred <- predict(rf.mod, test.rf)
+rf.auc <- performance(prediction(predict(rf.mod, test.rf, type = "prob")[,2],test.rf$WINorLOSS),"auc", x.measure = "cutoff")
+rf.auc <- rf.auc@y.values[[1]]
 rf.pred <- factor(rf.pred, levels = c("W", "L"))
 test.rf$WINorLOSS <- factor(test.rf$WINorLOSS, levels = c("W","L"))
 
@@ -353,7 +382,8 @@ Update table with Obj 2 models
 cm.df <- data.frame("Model" = c("Simple", "Forward", "Stepwise", "Backward", "Custom", "LASSO", "Complex", "LASSO 2", "LDA", "QDA", "RandomForests"),
            "Accuracy"= c(cm.simple$overall[1],cm.fwd$overall[1], cm.step$overall[1],cm.bkw$overall[1], cm.custom$overall[1],cm.lasso$overall[1],cm.complex$overall[1], cm.lasso2$overall[1], cm.lda$overall[1], cm.qda$overall[1], cm.rf$overall[1]),
            "Sensitivity"=c(cm.simple$byClass[1],cm.fwd$byClass[1], cm.step$byClass[1], cm.bkw$byClass[1], cm.custom$byClass[1], cm.lasso$byClass[1], cm.complex$byClass[1], cm.lasso2$byClass[1], cm.lda$byClass[1], cm.qda$byClass[1], cm.rf$byClass[1]),
-           "Specificty" = c(cm.simple$byClass[2],cm.fwd$byClass[2], cm.step$byClass[2],cm.bkw$byClass[2], cm.custom$byClass[2], cm.lasso$byClass[2], cm.complex$byClass[2], cm.lasso2$byClass[2], cm.lda$byClass[2], cm.qda$byClass[2], cm.rf$byClass[2]))
+           "Specificty" = c(cm.simple$byClass[2],cm.fwd$byClass[2], cm.step$byClass[2],cm.bkw$byClass[2], cm.custom$byClass[2], cm.lasso$byClass[2], cm.complex$byClass[2], cm.lasso2$byClass[2], cm.lda$byClass[2], cm.qda$byClass[2], cm.rf$byClass[2]),
+           "AUC" = c(simple.auc, fwd.auc, step.auc, bkw.auc, custom.auc, lasso.auc, complex.auc, lasso.auc2, lda.auc, qda.auc, rf.auc))
 cm.df <- kable(cm.df, format = "html") %>% kable_styling(latex_options = c("striped", "scale_down"), full_width = FALSE) %>% 
   row_spec(row = 0, italic = T, background = "#21918c", color = "white") %>% 
   column_spec(1:2, width = "0.5in")
@@ -369,13 +399,22 @@ complex.pred.roc <- prediction(predict(complex.mod, newdata = test.complex, type
 complex.roc <- performance(complex.pred.roc, "tpr", "fpr")
 lasso2.pred.roc <- prediction(predict(lasso.mod2, newx = test.complex.x, type = "response"), test.complex$WINorLOSS)
 lasso2.roc <- performance(lasso2.pred.roc, "tpr", "fpr")
+lda.pred.roc <- prediction(lda.pred$posterior[,2],test.num$WINorLOSS)
+lda.roc <- performance(lda.pred.roc, "tpr", "fpr")
+qda.pred.roc <- prediction(qda.pred$posterior[,2], test.num$WINorLOSS)
+qda.roc <- performance(qda.pred.roc, "tpr", "fpr")
+rf.pred.roc <- prediction(predict(rf.mod, test.rf, type = "prob")[,2],test.rf$WINorLOSS)
+rf.roc <- performance(rf.pred.roc, "tpr", "fpr")
 
 
 
-plot(complex.roc, colorize = T, lwd=2)
-plot(lasso2.roc, lwd = 1, add = TRUE)
-plot(lasso.roc, lwd = 1, add = TRUE, col = "red")
-#legend(x = .75, y = .4, legend = c("simple", "backwards", "stepwise", "lasso", "custom"), col = c("black", "red", "blue", "orange", "green"), lty =1)
+plot(custom.roc, col="#fde725", lwd=1)
+plot(lasso2.roc, lwd = 1, add = TRUE, col = "#3b528b")
+plot(lda.roc, lwd = 1, add = TRUE, col = "#21918c")
+plot(qda.roc, lwd = 1, add = TRUE, col = "#7ad151")
+plot(rf.roc, lwd = 1, add = TRUE, col = "#414487")
+plot(complex.roc, col = "#440154", lwd = 1, add = TRUE)
+legend(x = .75, y = .50, legend = c("simple", "backwards", "stepwise", "lasso", "custom","complex"), col = c("#fde725", "#3b528b", "#21918c", "#7ad151", "#414487", "440154"), lty =1)
 
 ```
 
