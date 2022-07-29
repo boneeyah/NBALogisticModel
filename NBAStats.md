@@ -101,6 +101,17 @@ library(reshape2)
 
 ``` r
 library(ggthemes)
+library(cowplot)
+```
+
+    ## 
+    ## Attaching package: 'cowplot'
+
+    ## The following object is masked from 'package:ggthemes':
+    ## 
+    ##     theme_map
+
+``` r
 library(ROCR)
 ```
 
@@ -198,7 +209,7 @@ str(cleandata) #check variable type
     ##  $ PF       : int  24 20 25 33 17 16 12 20 12 17 ...
 
 ``` r
-cleandata %>% count(WINorLOSS) %>% ggplot(aes(x=WINorLOSS, y= n, fill = WINorLOSS))+geom_bar(stat = "identity") 
+cleandata %>% count(WINorLOSS) %>% ggplot(aes(x=WINorLOSS, y= n, fill = WINorLOSS))+geom_bar(stat = "identity") + scale_fill_viridis_d()+theme_cowplot()
 ```
 
 ![](NBAStats_files/figure-markdown_github/wrangling%20and%20corr%20mat-1.png)
@@ -217,7 +228,7 @@ sapply(cleandata, function(x) sum(is.na(x))) #no NAs present
     ##         0         0         0         0
 
 ``` r
-ggpairs(cleandata, columns = 2:20, aes(color = WINorLOSS))
+ggpairs(cleandata, columns = 2:20, aes(color = WINorLOSS)) + scale_colour_viridis_d()
 ```
 
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
@@ -250,49 +261,49 @@ goals, field goal %, 3 point shots and 3 point shot % to a lesser
 extent, total rebounds, assists, and turnovers
 
 ``` r
-plot(WINorLOSS~Home, col = c("#F8766D","#00bfc4"), data = cleandata)
+cleandata %>% ggplot(aes(x=Home, fill=WINorLOSS))+geom_bar(position = "fill")+scale_fill_viridis_d()+labs(y="WINorLOSS")+theme_cowplot()
 ```
 
 ![](NBAStats_files/figure-markdown_github/var%20plots-1.png)
 
 ``` r
-plot(PTS~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
+cleandata %>% ggplot(aes(y=PTS, x=WINorLOSS, fill=WINorLOSS))+geom_boxplot()+scale_fill_viridis_d()+theme_cowplot()
 ```
 
 ![](NBAStats_files/figure-markdown_github/var%20plots-2.png)
 
 ``` r
-plot(`FG%`~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
+cleandata %>% ggplot(aes(y=`FG%`,x=WINorLOSS, fill=WINorLOSS))+geom_boxplot()+scale_fill_viridis_d()+theme_cowplot()
 ```
 
 ![](NBAStats_files/figure-markdown_github/var%20plots-3.png)
 
 ``` r
-plot(FG~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
+cleandata %>% ggplot(aes(y=FG, x=WINorLOSS, fill=WINorLOSS))+geom_boxplot()+scale_fill_viridis_d()+theme_cowplot()
 ```
 
 ![](NBAStats_files/figure-markdown_github/var%20plots-4.png)
 
 ``` r
-plot(`3PA`~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
+cleandata %>% ggplot(aes(y=`3PA`, x= WINorLOSS, fill=WINorLOSS))+geom_boxplot()+scale_fill_viridis_d()+theme_cowplot()
 ```
 
 ![](NBAStats_files/figure-markdown_github/var%20plots-5.png)
 
 ``` r
-plot(`3P%`~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
+cleandata %>% ggplot(aes(y=`3P%`,x=WINorLOSS, fill=WINorLOSS))+geom_boxplot()+scale_fill_viridis_d()+theme_cowplot()
 ```
 
 ![](NBAStats_files/figure-markdown_github/var%20plots-6.png)
 
 ``` r
-plot(TRB~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
+cleandata %>% ggplot(aes(y=TRB, x=WINorLOSS, fill=WINorLOSS))+geom_boxplot()+scale_fill_viridis_d()+theme_cowplot()
 ```
 
 ![](NBAStats_files/figure-markdown_github/var%20plots-7.png)
 
 ``` r
-plot(AST~WINorLOSS, col = c("#F8766D","#00bfc4"), data = cleandata)
+cleandata %>% ggplot(aes(y=AST, x=WINorLOSS, fill=WINorLOSS))+geom_boxplot()+scale_fill_viridis_d()+theme_cowplot()
 ```
 
 ![](NBAStats_files/figure-markdown_github/var%20plots-8.png)
@@ -303,7 +314,7 @@ explanatory variables
 cleandata.corr <- round(cor(cleandata[,c(2,4:20)]),2)
 cleandata.corr <- melt(cleandata.corr)
 
-cleandata.corr %>% ggplot(aes(x=Var1, y=Var2, fill=value))+geom_tile()+scale_fill_viridis_c()+theme(axis.title.x = element_blank(),axis.title.y = element_blank())
+cleandata.corr %>% ggplot(aes(x=Var1, y=Var2, fill=value))+geom_tile()+scale_fill_viridis_c()+theme_cowplot()+theme(axis.title.x = element_blank(),axis.title.y = element_blank(), axis.text = element_text(size = 10))
 ```
 
 ![](NBAStats_files/figure-markdown_github/heatmap-1.png) Not
@@ -890,12 +901,13 @@ bkw.roc <- performance(bkw.pred.roc, "tpr", "fpr")
 simple.pred.roc <- prediction(predict(simple.mod, newdata = test, type = "response"), test$WINorLOSS)
 simple.roc <- performance(simple.pred.roc, "tpr", "fpr")
 
-plot(simple.roc, col = "#5ec962", lwd = 1)
-plot(bkw.roc, col = "#3b528b", lwd = 1, add = TRUE)
-plot(step.roc, col = "#21918c", lwd = 1, add = TRUE)
-plot(lasso.roc, col = "#fde725", lwd = 1, add =TRUE)
-plot(custom.roc, col = "#440154", lwd = 1, add = TRUE)
-legend(x = .75, y = .4, legend = c("simple", "backwards", "stepwise", "lasso", "custom"), col = c("#5ec962", "#3b528b", "#21918c", "#fde725", "#440154"), lty =1)
+df.roc <- rbind(data.frame(x.vals=simple.roc@x.values[[1]], y.vals=simple.roc@y.values[[1]],model = "simple"),
+                data.frame(x.vals=bkw.roc@x.values[[1]], y.vals=bkw.roc@y.values[[1]], model="bkw"),
+                data.frame(x.vals=step.roc@x.values[[1]], y.vals=step.roc@y.values[[1]], model="step"),
+                data.frame(x.vals=lasso.roc@x.values[[1]], y.vals=lasso.roc@y.values[[1]], model="lasso"),
+                data.frame(x.vals=custom.roc@x.values[[1]], y.vals=custom.roc@y.values[[1]], model="custom"))
+df.roc$model <- factor(df.roc$model, levels = c("simple", "bkw", "step", "lasso", "custom"))
+df.roc %>% ggplot(aes(x=x.vals,y=y.vals, color = model))+geom_line(size=.55)+theme_cowplot()+labs(x="False positive rate", y="True positive rate")+scale_color_viridis_d(direction = -1)
 ```
 
 ![](NBAStats_files/figure-markdown_github/roc%20plot-1.png)
@@ -2072,8 +2084,21 @@ qda.roc <- performance(qda.pred.roc, "tpr", "fpr")
 rf.pred.roc <- prediction(predict(rf.mod, test.rf, type = "prob")[,2],test.rf$WINorLOSS)
 rf.roc <- performance(rf.pred.roc, "tpr", "fpr")
 
+df.roc <- rbind(data.frame(x.vals=lasso2.roc@x.values[[1]], y.vals=lasso2.roc@y.values[[1]],model="lasso2"),
+                data.frame(x.vals=lda.roc@x.values[[1]], y.vals=lda.roc@y.values[[1]], model="lda"),
+                data.frame(x.vals=qda.roc@x.values[[1]], y.vals=qda.roc@y.values[[1]], model="qda"),
+                data.frame(x.vals=rf.roc@x.values[[1]], y.vals=rf.roc@y.values[[1]], model = "rf"),
+                data.frame(x.vals=complex.roc@x.values[[1]], y.vals=complex.roc@y.values[[1]], model="complex"),
+                df.roc)
+df.roc$model <- factor(df.roc$model, levels = c("simple", "bkw", "step", "lasso", "custom", "rf", "lda", "qda", "lasso2", "complex"))
 
+df.roc %>% filter(model %in% c("custom", "rf", "lda", "qda", "lasso2", "complex")) %>% 
+  ggplot(aes(x=x.vals, y=y.vals, color = model))+geom_line()+theme_cowplot()+scale_color_viridis_d(direction = -1)+labs(x="False positive rate", y="True positive rate")
+```
 
+![](NBAStats_files/figure-markdown_github/new%20roc%20plot-1.png)
+
+``` r
 plot(custom.roc, col="#fde725", lwd=1)
 plot(lasso2.roc, lwd = 1, add = TRUE, col = "#3b528b")
 plot(lda.roc, lwd = 1, add = TRUE, col = "#21918c")
@@ -2083,4 +2108,4 @@ plot(complex.roc, col = "#440154", lwd = 1, add = TRUE)
 legend(x = .75, y = .50, legend = c("simple", "backwards", "stepwise", "lasso", "custom","complex"), col = c("#fde725", "#3b528b", "#21918c", "#7ad151", "#414487", "440154"), lty =1)
 ```
 
-![](NBAStats_files/figure-markdown_github/new%20roc%20plot-1.png)
+![](NBAStats_files/figure-markdown_github/new%20roc%20plot-2.png)
