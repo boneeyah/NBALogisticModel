@@ -72,8 +72,8 @@ cleandata %>% count(WINorLOSS) %>% ggplot(aes(x=WINorLOSS, y= n, fill = WINorLOS
 
 sapply(cleandata, function(x) sum(is.na(x))) #no NAs present
 
-ggpairs(cleandata, columns = 2:20, aes(color = WINorLOSS)) + scale_colour_viridis_d()
-#ggpairs(cleandata, columns = 11:20, aes(color = WINorLOSS))
+ggpairs(cleandata, columns = 2:10, aes(color = WINorLOSS), upper = list(continuous = wrap("cor", size=3, color="black")))+theme_cowplot()+scale_fill_viridis_d()+scale_color_viridis_d()+theme(text = element_text(size = 10),axis.text =element_blank())
+ggpairs(cleandata, columns = 11:20, aes(color = WINorLOSS), upper = list(continuous = wrap("cor", size=3, color = "black"))) + scale_color_viridis_d()+scale_fill_viridis_d()+theme_cowplot()+theme(text = element_text(size = 10),axis.text =element_blank())
 
 ```
 There is a separation between home and away

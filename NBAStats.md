@@ -228,19 +228,9 @@ sapply(cleandata, function(x) sum(is.na(x))) #no NAs present
     ##         0         0         0         0
 
 ``` r
-ggpairs(cleandata, columns = 2:20, aes(color = WINorLOSS)) + scale_colour_viridis_d()
+ggpairs(cleandata, columns = 2:10, aes(color = WINorLOSS), upper = list(continuous = wrap("cor", size=3, color="black")))+theme_cowplot()+scale_fill_viridis_d()+scale_color_viridis_d()+theme(text = element_text(size = 10),axis.text =element_blank())
 ```
 
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
-    ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
     ## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
@@ -253,9 +243,10 @@ ggpairs(cleandata, columns = 2:20, aes(color = WINorLOSS)) + scale_colour_viridi
 ![](NBAStats_files/figure-markdown_github/wrangling%20and%20corr%20mat-2.png)
 
 ``` r
-#ggpairs(cleandata, columns = 11:20, aes(color = WINorLOSS))
+ggpairs(cleandata, columns = 11:20, aes(color = WINorLOSS), upper = list(continuous = wrap("cor", size=3, color = "black"))) + scale_color_viridis_d()+scale_fill_viridis_d()+theme_cowplot()+theme(text = element_text(size = 10),axis.text =element_blank())
 ```
 
+![](NBAStats_files/figure-markdown_github/wrangling%20and%20corr%20mat-3.png)
 There is a separation between home and away also for team points, field
 goals, field goal %, 3 point shots and 3 point shot % to a lesser
 extent, total rebounds, assists, and turnovers
