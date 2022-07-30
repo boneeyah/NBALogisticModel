@@ -978,9 +978,7 @@ LASSO
 </tbody>
 </table>
 
-## will move this to Obj 2 section
-
-## need to add new models to this curve
+ROC for objective 1, with lower complexity data
 
 ``` r
 custom.pred.roc <- prediction(predict(custom.mod, newdata = test, type = "response"), test$WINorLOSS)
@@ -1102,22 +1100,860 @@ cm.custom.full
 Calculate leverage and influence plots to check assumptions are met
 
 ``` r
-blr_plot_diag_fit(custom.mod.full)
+## residuals for high leverage outliers
+blr_plot_leverage(custom.mod.full) #identifying any particularly high leverage observations
 ```
 
 ![](NBAStats_files/figure-markdown_github/assumptions-1.png)
 
 ``` r
-blr_plot_diag_leverage(custom.mod.full)
+blr_plot_leverage_fitted(custom.mod.full) # high leverage fitted values
 ```
 
 ![](NBAStats_files/figure-markdown_github/assumptions-2.png)
 
 ``` r
-blr_plot_diag_influence(custom.mod.full)
+blr_plot_pearson_residual(custom.mod.full) #pearson residuals for each observation
 ```
 
 ![](NBAStats_files/figure-markdown_github/assumptions-3.png)
+
+``` r
+plot(custom.mod.full, col = "blue") # plot 4 high leverage cook's D values
+```
+
+![](NBAStats_files/figure-markdown_github/assumptions-4.png)![](NBAStats_files/figure-markdown_github/assumptions-5.png)![](NBAStats_files/figure-markdown_github/assumptions-6.png)![](NBAStats_files/figure-markdown_github/assumptions-7.png)
+
+``` r
+# correlation for colinearity
+custom.mod.corr <- round(cor(numdata[,2:16]),2)
+custom.mod.corr %>% kable(format = "html") %>% kable_styling(latex_options = c("striped", "scale_down"), full_width = FALSE) %>% 
+  row_spec(row = 0, italic = T, background = "#21918c", color = "white") %>% 
+  column_spec(column = 1, italic = T, background = "#21918c", color ="white") #correlation matrix, difficult to see
+```
+
+<table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+Game
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+PTS
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+FGA
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+FG%
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+3PA
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+3P%
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+FTA
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+FT%
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+ORB
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+TRB
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+AST
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+STL
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+BLK
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+TOV
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+PF
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
+Game
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+-0.04
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.08
+</td>
+<td style="text-align:right;">
+-0.01
+</td>
+<td style="text-align:right;">
+-0.02
+</td>
+<td style="text-align:right;">
+-0.08
+</td>
+<td style="text-align:right;">
+-0.09
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
+PTS
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.28
+</td>
+<td style="text-align:right;">
+0.71
+</td>
+<td style="text-align:right;">
+0.27
+</td>
+<td style="text-align:right;">
+0.48
+</td>
+<td style="text-align:right;">
+0.27
+</td>
+<td style="text-align:right;">
+0.18
+</td>
+<td style="text-align:right;">
+-0.01
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+0.57
+</td>
+<td style="text-align:right;">
+0.10
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+-0.12
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
+FGA
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+0.28
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+-0.22
+</td>
+<td style="text-align:right;">
+0.26
+</td>
+<td style="text-align:right;">
+-0.14
+</td>
+<td style="text-align:right;">
+-0.22
+</td>
+<td style="text-align:right;">
+-0.04
+</td>
+<td style="text-align:right;">
+0.51
+</td>
+<td style="text-align:right;">
+0.42
+</td>
+<td style="text-align:right;">
+0.20
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+-0.28
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
+FG%
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.71
+</td>
+<td style="text-align:right;">
+-0.22
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+-0.07
+</td>
+<td style="text-align:right;">
+0.49
+</td>
+<td style="text-align:right;">
+-0.05
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+-0.35
+</td>
+<td style="text-align:right;">
+-0.21
+</td>
+<td style="text-align:right;">
+0.55
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
+3PA
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+0.27
+</td>
+<td style="text-align:right;">
+0.26
+</td>
+<td style="text-align:right;">
+-0.07
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+-0.10
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+-0.01
+</td>
+<td style="text-align:right;">
+-0.01
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
+3P%
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.48
+</td>
+<td style="text-align:right;">
+-0.14
+</td>
+<td style="text-align:right;">
+0.49
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+-0.07
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+-0.20
+</td>
+<td style="text-align:right;">
+-0.12
+</td>
+<td style="text-align:right;">
+0.37
+</td>
+<td style="text-align:right;">
+-0.03
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
+FTA
+</td>
+<td style="text-align:right;">
+-0.04
+</td>
+<td style="text-align:right;">
+0.27
+</td>
+<td style="text-align:right;">
+-0.22
+</td>
+<td style="text-align:right;">
+-0.05
+</td>
+<td style="text-align:right;">
+-0.10
+</td>
+<td style="text-align:right;">
+-0.07
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+-0.03
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+-0.17
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.21
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
+FT%
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+0.18
+</td>
+<td style="text-align:right;">
+-0.04
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+-0.03
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+-0.09
+</td>
+<td style="text-align:right;">
+-0.05
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+-0.02
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+-0.01
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
+ORB
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+-0.01
+</td>
+<td style="text-align:right;">
+0.51
+</td>
+<td style="text-align:right;">
+-0.35
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+-0.20
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+-0.09
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.56
+</td>
+<td style="text-align:right;">
+-0.12
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
+TRB
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+0.42
+</td>
+<td style="text-align:right;">
+-0.21
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+-0.12
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+-0.05
+</td>
+<td style="text-align:right;">
+0.56
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+-0.11
+</td>
+<td style="text-align:right;">
+0.17
+</td>
+<td style="text-align:right;">
+0.13
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
+AST
+</td>
+<td style="text-align:right;">
+0.08
+</td>
+<td style="text-align:right;">
+0.57
+</td>
+<td style="text-align:right;">
+0.20
+</td>
+<td style="text-align:right;">
+0.55
+</td>
+<td style="text-align:right;">
+0.23
+</td>
+<td style="text-align:right;">
+0.37
+</td>
+<td style="text-align:right;">
+-0.17
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+-0.12
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+-0.03
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
+STL
+</td>
+<td style="text-align:right;">
+-0.01
+</td>
+<td style="text-align:right;">
+0.10
+</td>
+<td style="text-align:right;">
+0.12
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+-0.03
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+-0.02
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+-0.11
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.13
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
+BLK
+</td>
+<td style="text-align:right;">
+-0.02
+</td>
+<td style="text-align:right;">
+0.06
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+-0.01
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+0.02
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.17
+</td>
+<td style="text-align:right;">
+0.09
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+-0.01
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
+TOV
+</td>
+<td style="text-align:right;">
+-0.08
+</td>
+<td style="text-align:right;">
+-0.12
+</td>
+<td style="text-align:right;">
+-0.28
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+-0.01
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+-0.01
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.13
+</td>
+<td style="text-align:right;">
+-0.03
+</td>
+<td style="text-align:right;">
+0.13
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+<td style="text-align:right;">
+0.17
+</td>
+</tr>
+<tr>
+<td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
+PF
+</td>
+<td style="text-align:right;">
+-0.09
+</td>
+<td style="text-align:right;">
+0.15
+</td>
+<td style="text-align:right;">
+0.07
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.21
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+0.05
+</td>
+<td style="text-align:right;">
+0.01
+</td>
+<td style="text-align:right;">
+0.00
+</td>
+<td style="text-align:right;">
+0.03
+</td>
+<td style="text-align:right;">
+-0.01
+</td>
+<td style="text-align:right;">
+0.17
+</td>
+<td style="text-align:right;">
+1.00
+</td>
+</tr>
+</tbody>
+</table>
+
+``` r
+custom.mod.corr <- melt(custom.mod.corr)
+custom.mod.corr %>% ggplot(aes(x=Var1, y = Var2, fill = value))+geom_tile()+scale_fill_viridis_c()+theme_cowplot()+theme(axis.title.x = element_blank(),axis.title.y = element_blank(), axis.text = element_text(size = 10))
+```
+
+![](NBAStats_files/figure-markdown_github/assumptions-8.png)
+
+``` r
+#linearity check
+cleandata %>% mutate("Log Odds" = custom.mod.full$linear.predictors) %>% dplyr::select(c(21,4,6,7,9,10,12,13,15:21)) %>% 
+  pivot_longer(cols = 2:14, names_to = "statistic") %>% ggplot(aes(x=value,y=`Log Odds`))+geom_smooth(fill = "#440154", alpha = .3, method = "loess", size = 1, span = 1.25)+facet_wrap(vars(statistic), scales = "free")+theme_cowplot()+theme(axis.text = element_blank())
+```
+
+    ## `geom_smooth()` using formula 'y ~ x'
+
+![](NBAStats_files/figure-markdown_github/assumptions-9.png)
 
 create table with interpretable values on odds ratio scale
 

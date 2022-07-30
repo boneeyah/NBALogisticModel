@@ -225,8 +225,8 @@ cm.df <- kable(cm.df, format = "html") %>% kable_styling(latex_options = c("stri
   column_spec(1:2, width = "0.5in")
 cm.df
 ```
-## will move this to Obj 2 section
-## need to add new models to this curve
+
+ROC for objective 1, with lower complexity data
 ```{r roc plot}
 
 
@@ -269,10 +269,23 @@ cm.custom.full
 ```
 Calculate leverage and influence plots to check assumptions are met
 ```{r assumptions}
+## residuals for high leverage outliers
+blr_plot_leverage(custom.mod.full) #identifying any particularly high leverage observations
+blr_plot_leverage_fitted(custom.mod.full) # high leverage fitted values
+blr_plot_pearson_residual(custom.mod.full) #pearson residuals for each observation
+plot(custom.mod.full, col = "blue") # plot 4 high leverage cook's D values
 
-blr_plot_diag_fit(custom.mod.full)
-blr_plot_diag_leverage(custom.mod.full)
-blr_plot_diag_influence(custom.mod.full)
+# correlation for colinearity
+custom.mod.corr <- round(cor(numdata[,2:16]),2)
+custom.mod.corr %>% kable(format = "html") %>% kable_styling(latex_options = c("striped", "scale_down"), full_width = FALSE) %>% 
+  row_spec(row = 0, italic = T, background = "#21918c", color = "white") %>% 
+  column_spec(column = 1, italic = T, background = "#21918c", color ="white") #correlation matrix, difficult to see
+custom.mod.corr <- melt(custom.mod.corr)
+custom.mod.corr %>% ggplot(aes(x=Var1, y = Var2, fill = value))+geom_tile()+scale_fill_viridis_c()+theme_cowplot()+theme(axis.title.x = element_blank(),axis.title.y = element_blank(), axis.text = element_text(size = 10))
+
+#linearity check
+cleandata %>% mutate("Log Odds" = custom.mod.full$linear.predictors) %>% dplyr::select(c(21,4,6,7,9,10,12,13,15:21)) %>% 
+  pivot_longer(cols = 2:14, names_to = "statistic") %>% ggplot(aes(x=value,y=`Log Odds`))+geom_smooth(fill = "#440154", alpha = .3, method = "loess", size = 1, span = 1.25)+facet_wrap(vars(statistic), scales = "free")+theme_cowplot()+theme(axis.text = element_blank())
 ```
 
 create table with interpretable values on odds ratio scale
