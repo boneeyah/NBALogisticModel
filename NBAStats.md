@@ -1018,45 +1018,43 @@ the rest of the models
 
 ``` r
 #fit model with all data
-custom.mod.full <- glm(WINorLOSS~ Home + PTS + FGA + `FG%` + `3PA` + `3P%` + FTA + `FT%` + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = cleandata)
+custom.mod.full <- glm(WINorLOSS~ Home + PTS + FGA + `3PA` + `3P%` + FTA + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = cleandata)
 summary(custom.mod.full)
 ```
 
     ## 
     ## Call:
-    ## glm(formula = WINorLOSS ~ Home + PTS + FGA + `FG%` + `3PA` + 
-    ##     `3P%` + FTA + `FT%` + TRB + AST + STL + BLK + TOV + PF, family = "binomial", 
+    ## glm(formula = WINorLOSS ~ Home + PTS + FGA + `3PA` + `3P%` + 
+    ##     FTA + TRB + AST + STL + BLK + TOV + PF, family = "binomial", 
     ##     data = cleandata)
     ## 
     ## Deviance Residuals: 
     ##     Min       1Q   Median       3Q      Max  
-    ## -3.0134  -0.4928  -0.0016   0.4555   3.4227  
+    ## -3.0229  -0.4926  -0.0019   0.4561   3.4353  
     ## 
     ## Coefficients:
     ##              Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept) -8.630924   2.551600  -3.383 0.000718 ***
-    ## HomeHome     0.382181   0.062089   6.155 7.49e-10 ***
-    ## PTS          0.143370   0.024703   5.804 6.48e-09 ***
-    ## FGA         -0.295946   0.023478 -12.605  < 2e-16 ***
-    ## `FG%`        9.939223   4.242419   2.343 0.019139 *  
-    ## `3PA`       -0.008996   0.009857  -0.913 0.361442    
-    ## `3P%`        2.391012   0.673687   3.549 0.000386 ***
-    ## FTA         -0.082420   0.019312  -4.268 1.97e-05 ***
-    ## `FT%`        1.561296   0.594186   2.628 0.008598 ** 
-    ## TRB          0.364510   0.008908  40.919  < 2e-16 ***
-    ## AST          0.025185   0.008272   3.045 0.002330 ** 
-    ## STL          0.395266   0.013245  29.843  < 2e-16 ***
-    ## BLK          0.123000   0.012625   9.743  < 2e-16 ***
-    ## TOV         -0.336119   0.011014 -30.518  < 2e-16 ***
-    ## PF          -0.060502   0.007817  -7.740 9.93e-15 ***
+    ## (Intercept) -2.488304   0.493473  -5.042 4.60e-07 ***
+    ## HomeHome     0.384992   0.062044   6.205 5.46e-10 ***
+    ## PTS          0.201530   0.005630  35.797  < 2e-16 ***
+    ## FGA         -0.348226   0.008939 -38.954  < 2e-16 ***
+    ## `3PA`       -0.029608   0.004656  -6.360 2.02e-10 ***
+    ## `3P%`        1.074937   0.408382   2.632  0.00848 ** 
+    ## FTA         -0.126761   0.006124 -20.699  < 2e-16 ***
+    ## TRB          0.364406   0.008906  40.919  < 2e-16 ***
+    ## AST          0.024540   0.008155   3.009  0.00262 ** 
+    ## STL          0.395341   0.013234  29.873  < 2e-16 ***
+    ## BLK          0.123459   0.012619   9.784  < 2e-16 ***
+    ## TOV         -0.335859   0.011007 -30.513  < 2e-16 ***
+    ## PF          -0.060361   0.007810  -7.729 1.09e-14 ***
     ## ---
     ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
     ## 
     ## (Dispersion parameter for binomial family taken to be 1)
     ## 
     ##     Null deviance: 13641.1  on 9839  degrees of freedom
-    ## Residual deviance:  6696.8  on 9825  degrees of freedom
-    ## AIC: 6726.8
+    ## Residual deviance:  6703.8  on 9827  degrees of freedom
+    ## AIC: 6729.8
     ## 
     ## Number of Fisher Scoring iterations: 6
 
@@ -1073,26 +1071,26 @@ cm.custom.full
     ## 
     ##           Reference
     ## Prediction    W    L
-    ##          W 4149  754
-    ##          L  771 4166
+    ##          W 4149  743
+    ##          L  771 4177
     ##                                           
-    ##                Accuracy : 0.845           
-    ##                  95% CI : (0.8377, 0.8521)
+    ##                Accuracy : 0.8461          
+    ##                  95% CI : (0.8389, 0.8532)
     ##     No Information Rate : 0.5             
     ##     P-Value [Acc > NIR] : <2e-16          
     ##                                           
-    ##                   Kappa : 0.69            
+    ##                   Kappa : 0.6923          
     ##                                           
-    ##  Mcnemar's Test P-Value : 0.682           
+    ##  Mcnemar's Test P-Value : 0.4877          
     ##                                           
     ##             Sensitivity : 0.8433          
-    ##             Specificity : 0.8467          
-    ##          Pos Pred Value : 0.8462          
-    ##          Neg Pred Value : 0.8438          
+    ##             Specificity : 0.8490          
+    ##          Pos Pred Value : 0.8481          
+    ##          Neg Pred Value : 0.8442          
     ##              Prevalence : 0.5000          
     ##          Detection Rate : 0.4216          
-    ##    Detection Prevalence : 0.4983          
-    ##       Balanced Accuracy : 0.8450          
+    ##    Detection Prevalence : 0.4972          
+    ##       Balanced Accuracy : 0.8461          
     ##                                           
     ##        'Positive' Class : W               
     ## 
@@ -1993,16 +1991,16 @@ Odds Ratio
 (Intercept)
 </td>
 <td style="text-align:right;width: 0.5in; ">
--8.6309239
+-2.4883039
 </td>
 <td style="text-align:right;">
-1.785000e-04
+0.0830507
 </td>
 <td style="text-align:right;">
-0.0000012
+0.0315718
 </td>
 <td style="text-align:right;">
-2.651940e-02
+0.2184681
 </td>
 </tr>
 <tr>
@@ -2010,16 +2008,16 @@ Odds Ratio
 HomeHome
 </td>
 <td style="text-align:right;width: 0.5in; ">
-0.3821813
+0.3849918
 </td>
 <td style="text-align:right;">
-1.465478e+00
+1.4696023
 </td>
 <td style="text-align:right;">
-1.2975637
+1.3013314
 </td>
 <td style="text-align:right;">
-1.655121e+00
+1.6596318
 </td>
 </tr>
 <tr>
@@ -2027,16 +2025,16 @@ HomeHome
 PTS
 </td>
 <td style="text-align:right;width: 0.5in; ">
-0.1433704
+0.2015298
 </td>
 <td style="text-align:right;">
-1.154157e+00
+1.2232727
 </td>
 <td style="text-align:right;">
-1.0996082
+1.2098490
 </td>
 <td style="text-align:right;">
-1.211412e+00
+1.2368454
 </td>
 </tr>
 <tr>
@@ -2044,33 +2042,16 @@ PTS
 FGA
 </td>
 <td style="text-align:right;width: 0.5in; ">
--0.2959456
+-0.3482258
 </td>
 <td style="text-align:right;">
-7.438279e-01
+0.7059395
 </td>
 <td style="text-align:right;">
-0.7103747
+0.6936784
 </td>
 <td style="text-align:right;">
-7.788564e-01
-</td>
-</tr>
-<tr>
-<td style="text-align:left;width: 0.5in; ">
-`FG%`
-</td>
-<td style="text-align:right;width: 0.5in; ">
-9.9392235
-</td>
-<td style="text-align:right;">
-2.072764e+04
-</td>
-<td style="text-align:right;">
-5.0745365
-</td>
-<td style="text-align:right;">
-8.466491e+07
+0.7184172
 </td>
 </tr>
 <tr>
@@ -2078,16 +2059,16 @@ FGA
 `3PA`
 </td>
 <td style="text-align:right;width: 0.5in; ">
--0.0089960
+-0.0296079
 </td>
 <td style="text-align:right;">
-9.910443e-01
+0.9708261
 </td>
 <td style="text-align:right;">
-0.9720811
+0.9620076
 </td>
 <td style="text-align:right;">
-1.010377e+00
+0.9797254
 </td>
 </tr>
 <tr>
@@ -2095,16 +2076,16 @@ FGA
 `3P%`
 </td>
 <td style="text-align:right;width: 0.5in; ">
-2.3910118
+1.0749370
 </td>
 <td style="text-align:right;">
-1.092454e+01
+2.9298084
 </td>
 <td style="text-align:right;">
-2.9171571
+1.3159020
 </td>
 <td style="text-align:right;">
-4.091162e+01
+6.5231126
 </td>
 </tr>
 <tr>
@@ -2112,33 +2093,16 @@ FGA
 FTA
 </td>
 <td style="text-align:right;width: 0.5in; ">
--0.0824201
+-0.1267611
 </td>
 <td style="text-align:right;">
-9.208850e-01
+0.8809441
 </td>
 <td style="text-align:right;">
-0.8866797
+0.8704337
 </td>
 <td style="text-align:right;">
-9.564098e-01
-</td>
-</tr>
-<tr>
-<td style="text-align:left;width: 0.5in; ">
-`FT%`
-</td>
-<td style="text-align:right;width: 0.5in; ">
-1.5612959
-</td>
-<td style="text-align:right;">
-4.764992e+00
-</td>
-<td style="text-align:right;">
-1.4869295
-</td>
-<td style="text-align:right;">
-1.526982e+01
+0.8915815
 </td>
 </tr>
 <tr>
@@ -2146,16 +2110,16 @@ FTA
 TRB
 </td>
 <td style="text-align:right;width: 0.5in; ">
-0.3645101
+0.3644057
 </td>
 <td style="text-align:right;">
-1.439808e+00
+1.4396582
 </td>
 <td style="text-align:right;">
-1.4148881
+1.4147476
 </td>
 <td style="text-align:right;">
-1.465168e+00
+1.4650073
 </td>
 </tr>
 <tr>
@@ -2163,16 +2127,16 @@ TRB
 AST
 </td>
 <td style="text-align:right;width: 0.5in; ">
-0.0251854
+0.0245398
 </td>
 <td style="text-align:right;">
-1.025505e+00
+1.0248433
 </td>
 <td style="text-align:right;">
-1.0090126
+1.0085929
 </td>
 <td style="text-align:right;">
-1.042267e+00
+1.0413555
 </td>
 </tr>
 <tr>
@@ -2180,16 +2144,16 @@ AST
 STL
 </td>
 <td style="text-align:right;width: 0.5in; ">
-0.3952663
+0.3953412
 </td>
 <td style="text-align:right;">
-1.484779e+00
+1.4848907
 </td>
 <td style="text-align:right;">
-1.4467318
+1.4468701
 </td>
 <td style="text-align:right;">
-1.523828e+00
+1.5239104
 </td>
 </tr>
 <tr>
@@ -2197,16 +2161,16 @@ STL
 BLK
 </td>
 <td style="text-align:right;width: 0.5in; ">
-0.1230003
+0.1234595
 </td>
 <td style="text-align:right;">
-1.130885e+00
+1.1314041
 </td>
 <td style="text-align:right;">
-1.1032460
+1.1037654
 </td>
 <td style="text-align:right;">
-1.159216e+00
+1.1597350
 </td>
 </tr>
 <tr>
@@ -2214,16 +2178,16 @@ BLK
 TOV
 </td>
 <td style="text-align:right;width: 0.5in; ">
--0.3361189
+-0.3358593
 </td>
 <td style="text-align:right;">
-7.145382e-01
+0.7147236
 </td>
 <td style="text-align:right;">
-0.6992791
+0.6994698
 </td>
 <td style="text-align:right;">
-7.301301e-01
+0.7303101
 </td>
 </tr>
 <tr>
@@ -2231,16 +2195,16 @@ TOV
 PF
 </td>
 <td style="text-align:right;width: 0.5in; ">
--0.0605019
+-0.0603611
 </td>
 <td style="text-align:right;">
-9.412920e-01
+0.9414245
 </td>
 <td style="text-align:right;">
-0.9269811
+0.9271234
 </td>
 <td style="text-align:right;">
-9.558238e-01
+0.9559462
 </td>
 </tr>
 </tbody>

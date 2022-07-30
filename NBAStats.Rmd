@@ -256,7 +256,7 @@ All the models, with the exception of the Simple model, perform reasonably well 
 Our custom model performs marginally better, with 1% higher Specificity (properly predicting true negatives), with slightly higher accuracy than the rest of the models
 ```{r full model}
 #fit model with all data
-custom.mod.full <- glm(WINorLOSS~ Home + PTS + FGA + `FG%` + `3PA` + `3P%` + FTA + `FT%` + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = cleandata)
+custom.mod.full <- glm(WINorLOSS~ Home + PTS + FGA + `3PA` + `3P%` + FTA + TRB + AST + STL + BLK + TOV + PF, family = "binomial", data = cleandata)
 summary(custom.mod.full)
 
 custom.pred.full <- custom.mod.full$fitted.values
