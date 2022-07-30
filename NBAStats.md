@@ -144,6 +144,31 @@ library(randomForest)
     ## 
     ##     margin
 
+``` r
+library(heplots)
+```
+
+    ## Warning: package 'heplots' was built under R version 4.1.3
+
+    ## Loading required package: car
+
+    ## Loading required package: carData
+
+    ## 
+    ## Attaching package: 'car'
+
+    ## The following object is masked from 'package:DescTools':
+    ## 
+    ##     Recode
+
+    ## The following object is masked from 'package:dplyr':
+    ## 
+    ##     recode
+
+    ## The following object is masked from 'package:purrr':
+    ## 
+    ##     some
+
 ## load data
 
 will clean and remove opposing team stats, since they’re included as the
@@ -249,7 +274,12 @@ ggpairs(cleandata, columns = 11:20, aes(color = WINorLOSS), upper = list(continu
 ![](NBAStats_files/figure-markdown_github/wrangling%20and%20corr%20mat-3.png)
 There is a separation between home and away also for team points, field
 goals, field goal %, 3 point shots and 3 point shot % to a lesser
-extent, total rebounds, assists, and turnovers
+extent, total rebounds, assists, and turnovers There is an outlier for
+offensive rebounds and total rebounds. It comes from a game between
+Milwaukee and Brooklyn which went to triple over time and had 81 total
+rebounds for the Bucks, who lost the game. We validated the number of
+rebounds, and since there is no error, we decided not to remove the
+observation from our dataset
 
 ``` r
 cleandata %>% ggplot(aes(x=Home, fill=WINorLOSS))+geom_bar(position = "fill")+scale_fill_viridis_d()+labs(y="WINorLOSS")+theme_cowplot()
@@ -320,13 +350,97 @@ index <- sample(nrow(cleandata), round(.8*nrow(cleandata)))
 train <- cleandata[index,]
 test <- cleandata[-index,]
 
+#new set with only numerical variables
+#removed colinear vars fg, 3p, ft
+numdata <- rawdata[,c(7,3,8,11,12,14,15,17:25)]
+train.num <- numdata[index,]
+test.num <- numdata[-index,]
 
-simple.mod <- glm(WINorLOSS~ Home + PTS + `FG%` + TRB, family = "binomial", data=train)
+#run PCA
+PCA <-  prcomp(train.num[,-1], scale. = TRUE)
+PCA
+```
+
+    ## Standard deviations (1, .., p=15):
+    ##  [1] 1.66933130 1.49371991 1.21702880 1.06601735 1.06241926 1.00882589
+    ##  [7] 0.99279172 0.97962383 0.94705682 0.88963044 0.76980762 0.60327791
+    ## [13] 0.60008146 0.51205055 0.07495786
+    ## 
+    ## Rotation (n x k) = (15 x 15):
+    ##              PC1          PC2          PC3         PC4          PC5
+    ## Game -0.05642841  0.064223814  0.252484331 -0.07701850  0.133429339
+    ## PTS  -0.48811529  0.278879519 -0.176513046 -0.03966821  0.214085103
+    ## FGA   0.04285344  0.565406734  0.215221508  0.15141348  0.097594436
+    ## FG%  -0.52170561 -0.085198486 -0.063773795 -0.14886525 -0.068863339
+    ## 3PA  -0.11885834  0.270483215  0.139759968  0.38113424 -0.039852954
+    ## 3P%  -0.41732361 -0.032229467 -0.012016011 -0.14785264 -0.085672805
+    ## FTA   0.01584157  0.004919354 -0.589859060 -0.13366285  0.423304035
+    ## FT%  -0.09108730 -0.034136877 -0.003950874  0.01543189  0.256735077
+    ## ORB   0.24407365  0.472129525 -0.122518467 -0.09819936 -0.004999932
+    ## TRB   0.15291514  0.472858085 -0.152925036 -0.33499073 -0.173827085
+    ## AST  -0.44580676  0.200318480  0.115337446  0.03285249 -0.181096101
+    ## STL  -0.05730968  0.064960695 -0.120812543  0.63595889 -0.190724348
+    ## BLK  -0.02447418  0.109259993 -0.087717385 -0.38184467 -0.410041593
+    ## TOV   0.03292279 -0.080648088 -0.421569881  0.14221046 -0.606818215
+    ## PF   -0.03234249  0.080487400 -0.485149582  0.26223273  0.179708572
+    ##               PC6          PC7         PC8         PC9        PC10        PC11
+    ## Game -0.460600683  0.473139530 -0.51258290  0.31156681  0.31790217  0.09084655
+    ## PTS   0.001271391  0.063223592  0.03059282 -0.03779427 -0.09545737 -0.07558954
+    ## FGA   0.044129771 -0.060039573  0.15800826 -0.09785335  0.20743207  0.01132910
+    ## FG%  -0.117340159 -0.025186116  0.02358264 -0.15344926  0.09445835 -0.26123533
+    ## 3PA   0.220728065 -0.133871581 -0.21569362  0.57412068 -0.47152198  0.01380061
+    ## 3P%  -0.022165522 -0.192246097 -0.12519416 -0.12355555 -0.11414988  0.80866272
+    ## FTA  -0.230236261  0.192731030  0.08416054  0.16628772 -0.36557174 -0.07005308
+    ## FT%   0.730815465  0.501236431 -0.23178735 -0.23662921  0.05543544  0.02862068
+    ## ORB  -0.112317111 -0.011811986 -0.09101874 -0.29947141 -0.01090606  0.15961756
+    ## TRB   0.016873262  0.008102635 -0.18463235 -0.10723107 -0.11370963 -0.07670105
+    ## AST  -0.038030923 -0.042180030  0.03197128 -0.03326981  0.08821239 -0.37861313
+    ## STL  -0.248600754  0.459514088  0.31990185 -0.21984030 -0.05694223  0.18351247
+    ## BLK   0.199993575  0.347198118  0.46827689  0.46637394  0.15054453  0.15129144
+    ## TOV   0.046435304  0.045000091 -0.47053835 -0.07425080 -0.01142276 -0.12103712
+    ## PF    0.132343803 -0.298211724 -0.03704006  0.25732109  0.64724794  0.10901296
+    ##              PC12         PC13         PC14          PC15
+    ## Game  0.005275483 -0.003728542  0.004662583  0.0003193939
+    ## PTS   0.310255400 -0.049438489  0.170984115  0.6754847319
+    ## FGA   0.129590961 -0.071825741  0.602791982 -0.3621413818
+    ## FG%   0.463440423 -0.102986298 -0.286356996 -0.5162738407
+    ## 3PA   0.127502588  0.035058901 -0.209572832 -0.1400574923
+    ## 3P%  -0.187178785 -0.015753050  0.099499999 -0.1221406447
+    ## FTA  -0.199067340  0.109548614  0.206860266 -0.3112562793
+    ## FT%  -0.076149460  0.042271852 -0.057434831 -0.1206089484
+    ## ORB   0.190169850  0.617008729 -0.373701151  0.0026612284
+    ## TRB  -0.224041024 -0.643170355 -0.242003335  0.0047415947
+    ## AST  -0.674808841  0.317751921 -0.033549540 -0.0028844794
+    ## STL  -0.061374168 -0.191786660 -0.189681077  0.0033172289
+    ## BLK   0.084691345  0.125330802  0.008021422  0.0002770348
+    ## TOV   0.128485411  0.113414608  0.388550949 -0.0037698458
+    ## PF   -0.079055184 -0.076320108 -0.197773632  0.0032573572
+
+``` r
+summary(PCA)
+```
+
+    ## Importance of components:
+    ##                           PC1    PC2     PC3     PC4     PC5     PC6     PC7
+    ## Standard deviation     1.6693 1.4937 1.21703 1.06602 1.06242 1.00883 0.99279
+    ## Proportion of Variance 0.1858 0.1487 0.09874 0.07576 0.07525 0.06785 0.06571
+    ## Cumulative Proportion  0.1858 0.3345 0.43327 0.50903 0.58428 0.65213 0.71783
+    ##                            PC8     PC9    PC10    PC11    PC12    PC13    PC14
+    ## Standard deviation     0.97962 0.94706 0.88963 0.76981 0.60328 0.60008 0.51205
+    ## Proportion of Variance 0.06398 0.05979 0.05276 0.03951 0.02426 0.02401 0.01748
+    ## Cumulative Proportion  0.78181 0.84161 0.89437 0.93388 0.95814 0.98215 0.99963
+    ##                           PC15
+    ## Standard deviation     0.07496
+    ## Proportion of Variance 0.00037
+    ## Cumulative Proportion  1.00000
+
+``` r
+simple.mod <- glm(WINorLOSS~1, family = "binomial", data=train)#intercept only simple model
 coef(simple.mod)
 ```
 
-    ##  (Intercept)     HomeHome          PTS        `FG%`          TRB 
-    ## -21.45158977   0.48070279   0.02676465  24.98143539   0.16190756
+    ## (Intercept) 
+    ## -0.01626052
 
 ``` r
 summary(simple.mod)
@@ -334,30 +448,23 @@ summary(simple.mod)
 
     ## 
     ## Call:
-    ## glm(formula = WINorLOSS ~ Home + PTS + `FG%` + TRB, family = "binomial", 
-    ##     data = train)
+    ## glm(formula = WINorLOSS ~ 1, family = "binomial", data = train)
     ## 
     ## Deviance Residuals: 
-    ##     Min       1Q   Median       3Q      Max  
-    ## -3.0647  -0.7751  -0.1305   0.7730   2.8623  
+    ##    Min      1Q  Median      3Q     Max  
+    ## -1.171  -1.171  -1.171   1.184   1.184  
     ## 
     ## Coefficients:
-    ##               Estimate Std. Error z value Pr(>|z|)    
-    ## (Intercept) -21.451590   0.506465 -42.356  < 2e-16 ***
-    ## HomeHome      0.480703   0.056508   8.507  < 2e-16 ***
-    ## PTS           0.026765   0.003542   7.555 4.18e-14 ***
-    ## `FG%`        24.981435   0.914605  27.314  < 2e-16 ***
-    ## TRB           0.161908   0.005588  28.973  < 2e-16 ***
-    ## ---
-    ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+    ##             Estimate Std. Error z value Pr(>|z|)
+    ## (Intercept) -0.01626    0.02254  -0.721    0.471
     ## 
     ## (Dispersion parameter for binomial family taken to be 1)
     ## 
-    ##     Null deviance: 10912.4  on 7871  degrees of freedom
-    ## Residual deviance:  7605.2  on 7867  degrees of freedom
-    ## AIC: 7615.2
+    ##     Null deviance: 10912  on 7871  degrees of freedom
+    ## Residual deviance: 10912  on 7871  degrees of freedom
+    ## AIC: 10914
     ## 
-    ## Number of Fisher Scoring iterations: 5
+    ## Number of Fisher Scoring iterations: 3
 
 ``` r
 simple.pred <- predict(simple.mod, newdata = test, type = "response")
@@ -375,27 +482,27 @@ cm.simple
     ## Confusion Matrix and Statistics
     ## 
     ##           Reference
-    ## Prediction   W   L
-    ##          W 771 229
-    ##          L 245 723
+    ## Prediction    W    L
+    ##          W    0    0
+    ##          L 1016  952
     ##                                           
-    ##                Accuracy : 0.7591          
-    ##                  95% CI : (0.7396, 0.7779)
+    ##                Accuracy : 0.4837          
+    ##                  95% CI : (0.4614, 0.5061)
     ##     No Information Rate : 0.5163          
-    ##     P-Value [Acc > NIR] : <2e-16          
+    ##     P-Value [Acc > NIR] : 0.9982          
     ##                                           
-    ##                   Kappa : 0.518           
+    ##                   Kappa : 0               
     ##                                           
-    ##  Mcnemar's Test P-Value : 0.4908          
+    ##  Mcnemar's Test P-Value : <2e-16          
     ##                                           
-    ##             Sensitivity : 0.7589          
-    ##             Specificity : 0.7595          
-    ##          Pos Pred Value : 0.7710          
-    ##          Neg Pred Value : 0.7469          
+    ##             Sensitivity : 0.0000          
+    ##             Specificity : 1.0000          
+    ##          Pos Pred Value :    NaN          
+    ##          Neg Pred Value : 0.4837          
     ##              Prevalence : 0.5163          
-    ##          Detection Rate : 0.3918          
-    ##    Detection Prevalence : 0.5081          
-    ##       Balanced Accuracy : 0.7592          
+    ##          Detection Rate : 0.0000          
+    ##    Detection Prevalence : 0.0000          
+    ##       Balanced Accuracy : 0.5000          
     ##                                           
     ##        'Positive' Class : W               
     ## 
@@ -731,10 +838,6 @@ cm.lasso
     ##        'Positive' Class : W               
     ## 
 
-## will move this to obj 2 section
-
-## need to add new models to table
-
 Create a table with the results from all the confusion Matrix models
 
 ``` r
@@ -775,16 +878,16 @@ AUC
 Simple
 </td>
 <td style="text-align:right;width: 0.5in; ">
-0.7591463
+0.4837398
 </td>
 <td style="text-align:right;">
-0.7588583
+0.0000000
 </td>
 <td style="text-align:right;">
-0.7594538
+1.0000000
 </td>
 <td style="text-align:right;">
-0.8479021
+0.5000000
 </td>
 </tr>
 <tr>
@@ -1321,7 +1424,7 @@ test.complex <- complexdata[-index,]
 
 complex.mod <- glm(formula = WINorLOSS ~ Team + Home + Opp + PTS + FGA + 
                      `FG%` + `3P%` + `3PA` + FTA + `FT%` + TRB + AST + 
-                     STL + BLK + TOV + PF + Team:STL, family = "binomial", data = train.complex)
+                     STL + BLK + TOV + PF, family = "binomial", data = train.complex)
 complex.pred <- predict(complex.mod, test.complex, type = "response")
 complex.auc <- performance(prediction(complex.pred, test.complex$WINorLOSS),"auc")
 complex.auc <- complex.auc@y.values[[1]]
@@ -1337,28 +1440,28 @@ cm.complex
     ## 
     ##           Reference
     ## Prediction   W   L
-    ##          W 876 141
-    ##          L 140 811
-    ##                                          
-    ##                Accuracy : 0.8572         
-    ##                  95% CI : (0.841, 0.8724)
-    ##     No Information Rate : 0.5163         
-    ##     P-Value [Acc > NIR] : <2e-16         
-    ##                                          
-    ##                   Kappa : 0.7141         
-    ##                                          
-    ##  Mcnemar's Test P-Value : 1              
-    ##                                          
-    ##             Sensitivity : 0.8622         
-    ##             Specificity : 0.8519         
-    ##          Pos Pred Value : 0.8614         
-    ##          Neg Pred Value : 0.8528         
-    ##              Prevalence : 0.5163         
-    ##          Detection Rate : 0.4451         
-    ##    Detection Prevalence : 0.5168         
-    ##       Balanced Accuracy : 0.8570         
-    ##                                          
-    ##        'Positive' Class : W              
+    ##          W 875 142
+    ##          L 141 810
+    ##                                           
+    ##                Accuracy : 0.8562          
+    ##                  95% CI : (0.8399, 0.8714)
+    ##     No Information Rate : 0.5163          
+    ##     P-Value [Acc > NIR] : <2e-16          
+    ##                                           
+    ##                   Kappa : 0.7121          
+    ##                                           
+    ##  Mcnemar's Test P-Value : 1               
+    ##                                           
+    ##             Sensitivity : 0.8612          
+    ##             Specificity : 0.8508          
+    ##          Pos Pred Value : 0.8604          
+    ##          Neg Pred Value : 0.8517          
+    ##              Prevalence : 0.5163          
+    ##          Detection Rate : 0.4446          
+    ##    Detection Prevalence : 0.5168          
+    ##       Balanced Accuracy : 0.8560          
+    ##                                           
+    ##        'Positive' Class : W               
     ## 
 
 LASSO fit
@@ -1600,12 +1703,13 @@ cm.lasso2
 Create QDA LDA models
 
 ``` r
-#new set with only numerical variables
-#removed colinear vars fg, 3p, ft
-numdata <- rawdata[,c(7,3,8,11,12,14,15,17:25)]
-train.num <- numdata[index,]
-test.num <- numdata[-index,]
+#quick assumption check of equal covariances by using ellispes plot
+covEllipses(train.num[,2:16], train.num$WINorLOSS, fill = TRUE, pooled = FALSE, variables = 1:15, col = c("#277f8e","#440154"), fill.alpha = .05)
+```
 
+![](NBAStats_files/figure-markdown_github/LDA%20QDA-1.png)
+
+``` r
 lda.mod <- lda(WINorLOSS~., data=train.num, prior = c(.5,.5))
 lda.pred <-  predict(lda.mod, test.num)
 lda.auc <- performance(prediction(lda.pred$posterior[,2],test.num$WINorLOSS),"auc")
@@ -1680,86 +1784,6 @@ cm.qda
     ##                                           
     ##        'Positive' Class : L               
     ## 
-
-PCA might move this to an earlier point
-
-``` r
-PCA <-  prcomp(train.num[,-1], scale. = TRUE)
-PCA
-```
-
-    ## Standard deviations (1, .., p=15):
-    ##  [1] 1.66933130 1.49371991 1.21702880 1.06601735 1.06241926 1.00882589
-    ##  [7] 0.99279172 0.97962383 0.94705682 0.88963044 0.76980762 0.60327791
-    ## [13] 0.60008146 0.51205055 0.07495786
-    ## 
-    ## Rotation (n x k) = (15 x 15):
-    ##              PC1          PC2          PC3         PC4          PC5
-    ## Game -0.05642841  0.064223814  0.252484331 -0.07701850  0.133429339
-    ## PTS  -0.48811529  0.278879519 -0.176513046 -0.03966821  0.214085103
-    ## FGA   0.04285344  0.565406734  0.215221508  0.15141348  0.097594436
-    ## FG%  -0.52170561 -0.085198486 -0.063773795 -0.14886525 -0.068863339
-    ## 3PA  -0.11885834  0.270483215  0.139759968  0.38113424 -0.039852954
-    ## 3P%  -0.41732361 -0.032229467 -0.012016011 -0.14785264 -0.085672805
-    ## FTA   0.01584157  0.004919354 -0.589859060 -0.13366285  0.423304035
-    ## FT%  -0.09108730 -0.034136877 -0.003950874  0.01543189  0.256735077
-    ## ORB   0.24407365  0.472129525 -0.122518467 -0.09819936 -0.004999932
-    ## TRB   0.15291514  0.472858085 -0.152925036 -0.33499073 -0.173827085
-    ## AST  -0.44580676  0.200318480  0.115337446  0.03285249 -0.181096101
-    ## STL  -0.05730968  0.064960695 -0.120812543  0.63595889 -0.190724348
-    ## BLK  -0.02447418  0.109259993 -0.087717385 -0.38184467 -0.410041593
-    ## TOV   0.03292279 -0.080648088 -0.421569881  0.14221046 -0.606818215
-    ## PF   -0.03234249  0.080487400 -0.485149582  0.26223273  0.179708572
-    ##               PC6          PC7         PC8         PC9        PC10        PC11
-    ## Game -0.460600683  0.473139530 -0.51258290  0.31156681  0.31790217  0.09084655
-    ## PTS   0.001271391  0.063223592  0.03059282 -0.03779427 -0.09545737 -0.07558954
-    ## FGA   0.044129771 -0.060039573  0.15800826 -0.09785335  0.20743207  0.01132910
-    ## FG%  -0.117340159 -0.025186116  0.02358264 -0.15344926  0.09445835 -0.26123533
-    ## 3PA   0.220728065 -0.133871581 -0.21569362  0.57412068 -0.47152198  0.01380061
-    ## 3P%  -0.022165522 -0.192246097 -0.12519416 -0.12355555 -0.11414988  0.80866272
-    ## FTA  -0.230236261  0.192731030  0.08416054  0.16628772 -0.36557174 -0.07005308
-    ## FT%   0.730815465  0.501236431 -0.23178735 -0.23662921  0.05543544  0.02862068
-    ## ORB  -0.112317111 -0.011811986 -0.09101874 -0.29947141 -0.01090606  0.15961756
-    ## TRB   0.016873262  0.008102635 -0.18463235 -0.10723107 -0.11370963 -0.07670105
-    ## AST  -0.038030923 -0.042180030  0.03197128 -0.03326981  0.08821239 -0.37861313
-    ## STL  -0.248600754  0.459514088  0.31990185 -0.21984030 -0.05694223  0.18351247
-    ## BLK   0.199993575  0.347198118  0.46827689  0.46637394  0.15054453  0.15129144
-    ## TOV   0.046435304  0.045000091 -0.47053835 -0.07425080 -0.01142276 -0.12103712
-    ## PF    0.132343803 -0.298211724 -0.03704006  0.25732109  0.64724794  0.10901296
-    ##              PC12         PC13         PC14          PC15
-    ## Game  0.005275483 -0.003728542  0.004662583  0.0003193939
-    ## PTS   0.310255400 -0.049438489  0.170984115  0.6754847319
-    ## FGA   0.129590961 -0.071825741  0.602791982 -0.3621413818
-    ## FG%   0.463440423 -0.102986298 -0.286356996 -0.5162738407
-    ## 3PA   0.127502588  0.035058901 -0.209572832 -0.1400574923
-    ## 3P%  -0.187178785 -0.015753050  0.099499999 -0.1221406447
-    ## FTA  -0.199067340  0.109548614  0.206860266 -0.3112562793
-    ## FT%  -0.076149460  0.042271852 -0.057434831 -0.1206089484
-    ## ORB   0.190169850  0.617008729 -0.373701151  0.0026612284
-    ## TRB  -0.224041024 -0.643170355 -0.242003335  0.0047415947
-    ## AST  -0.674808841  0.317751921 -0.033549540 -0.0028844794
-    ## STL  -0.061374168 -0.191786660 -0.189681077  0.0033172289
-    ## BLK   0.084691345  0.125330802  0.008021422  0.0002770348
-    ## TOV   0.128485411  0.113414608  0.388550949 -0.0037698458
-    ## PF   -0.079055184 -0.076320108 -0.197773632  0.0032573572
-
-``` r
-summary(PCA)
-```
-
-    ## Importance of components:
-    ##                           PC1    PC2     PC3     PC4     PC5     PC6     PC7
-    ## Standard deviation     1.6693 1.4937 1.21703 1.06602 1.06242 1.00883 0.99279
-    ## Proportion of Variance 0.1858 0.1487 0.09874 0.07576 0.07525 0.06785 0.06571
-    ## Cumulative Proportion  0.1858 0.3345 0.43327 0.50903 0.58428 0.65213 0.71783
-    ##                            PC8     PC9    PC10    PC11    PC12    PC13    PC14
-    ## Standard deviation     0.97962 0.94706 0.88963 0.76981 0.60328 0.60008 0.51205
-    ## Proportion of Variance 0.06398 0.05979 0.05276 0.03951 0.02426 0.02401 0.01748
-    ## Cumulative Proportion  0.78181 0.84161 0.89437 0.93388 0.95814 0.98215 0.99963
-    ##                           PC15
-    ## Standard deviation     0.07496
-    ## Proportion of Variance 0.00037
-    ## Cumulative Proportion  1.00000
 
 ## random forests classification
 
@@ -1875,16 +1899,16 @@ AUC
 Simple
 </td>
 <td style="text-align:right;width: 0.5in; ">
-0.7591463
+0.4837398
 </td>
 <td style="text-align:right;">
-0.7588583
+0.0000000
 </td>
 <td style="text-align:right;">
-0.7594538
+1.0000000
 </td>
 <td style="text-align:right;">
-0.8479021
+0.5000000
 </td>
 </tr>
 <tr>
@@ -1977,16 +2001,16 @@ LASSO
 Complex
 </td>
 <td style="text-align:right;width: 0.5in; ">
-0.8572154
+0.8561992
 </td>
 <td style="text-align:right;">
-0.8622047
+0.8612205
 </td>
 <td style="text-align:right;">
-0.8518908
+0.8508403
 </td>
 <td style="text-align:right;">
-0.9319874
+0.9324940
 </td>
 </tr>
 <tr>

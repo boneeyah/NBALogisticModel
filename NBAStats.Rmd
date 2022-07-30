@@ -28,6 +28,7 @@ library(cowplot)
 library(ROCR)
 library(blorr)
 library(randomForest)
+library(heplots)
 ```
 
 ## load data
@@ -79,6 +80,8 @@ ggpairs(cleandata, columns = 11:20, aes(color = WINorLOSS), upper = list(continu
 There is a separation between home and away
 also for team points, field goals, field goal %, 3 point shots and 3 point shot %
 to a lesser extent, total rebounds, assists, and turnovers
+There is an outlier for offensive rebounds and total rebounds. It comes from a game between Milwaukee and Brooklyn which went to triple over time and had 81 total rebounds for the Bucks, who lost the game.
+We validated the number of rebounds, and since there is no error, we decided not to remove the observation from our dataset
 ```{r var plots}
 cleandata %>% ggplot(aes(x=Home, fill=WINorLOSS))+geom_bar(position = "fill")+scale_fill_viridis_d()+labs(y="WINorLOSS")+theme_cowplot()
 cleandata %>% ggplot(aes(y=PTS, x=WINorLOSS, fill=WINorLOSS))+geom_boxplot()+scale_fill_viridis_d()+theme_cowplot()
@@ -99,7 +102,7 @@ cleandata.corr <- melt(cleandata.corr)
 cleandata.corr %>% ggplot(aes(x=Var1, y=Var2, fill=value))+geom_tile()+scale_fill_viridis_c()+theme_cowplot()+theme(axis.title.x = element_blank(),axis.title.y = element_blank(), axis.text = element_text(size = 10))
 ```
 Not surprisingly, points and field goals, free throw attempts and free throws seem to have a strong correlation
-```{r split and simple}
+```{r split and PCA}
 #set seed
 set.seed(1776)
 ##80-20 split of data
@@ -107,8 +110,21 @@ index <- sample(nrow(cleandata), round(.8*nrow(cleandata)))
 train <- cleandata[index,]
 test <- cleandata[-index,]
 
+#new set with only numerical variables
+#removed colinear vars fg, 3p, ft
+numdata <- rawdata[,c(7,3,8,11,12,14,15,17:25)]
+train.num <- numdata[index,]
+test.num <- numdata[-index,]
 
-simple.mod <- glm(WINorLOSS~ Home + PTS + `FG%` + TRB, family = "binomial", data=train)
+#run PCA
+PCA <-  prcomp(train.num[,-1], scale. = TRUE)
+PCA
+summary(PCA)
+```
+
+```{r fit a simple model}
+
+simple.mod <- glm(WINorLOSS~1, family = "binomial", data=train)#intercept only simple model
 coef(simple.mod)
 summary(simple.mod)
 
@@ -197,8 +213,6 @@ lasso.pred <- factor(lasso.pred, levels = c("W","L"))
 cm.lasso <- confusionMatrix(data = lasso.pred, reference = test$WINorLOSS)
 cm.lasso
 ```
-## will move this to obj 2 section
-## need to add new models to table
 Create a table with the results from all the confusion Matrix models
 ```{r perf met table}
 cm.df <- data.frame("Model" = c("Simple", "Forward", "Stepwise", "Backward", "Custom", "LASSO"),
@@ -286,7 +300,7 @@ test.complex <- complexdata[-index,]
 
 complex.mod <- glm(formula = WINorLOSS ~ Team + Home + Opp + PTS + FGA + 
                      `FG%` + `3P%` + `3PA` + FTA + `FT%` + TRB + AST + 
-                     STL + BLK + TOV + PF + Team:STL, family = "binomial", data = train.complex)
+                     STL + BLK + TOV + PF, family = "binomial", data = train.complex)
 complex.pred <- predict(complex.mod, test.complex, type = "response")
 complex.auc <- performance(prediction(complex.pred, test.complex$WINorLOSS),"auc")
 complex.auc <- complex.auc@y.values[[1]]
@@ -325,12 +339,8 @@ cm.lasso2
 
 Create QDA LDA models
 ```{r LDA QDA}
-#new set with only numerical variables
-#removed colinear vars fg, 3p, ft
-numdata <- rawdata[,c(7,3,8,11,12,14,15,17:25)]
-train.num <- numdata[index,]
-test.num <- numdata[-index,]
-
+#quick assumption check of equal covariances by using ellispes plot
+covEllipses(train.num[,2:16], train.num$WINorLOSS, fill = TRUE, pooled = FALSE, variables = 1:15, col = c("#277f8e","#440154"), fill.alpha = .05)
 lda.mod <- lda(WINorLOSS~., data=train.num, prior = c(.5,.5))
 lda.pred <-  predict(lda.mod, test.num)
 lda.auc <- performance(prediction(lda.pred$posterior[,2],test.num$WINorLOSS),"auc")
@@ -347,12 +357,7 @@ qda.auc <- qda.auc@y.values[[1]]
 cm.qda <- confusionMatrix(qda.pred$class, test.num$WINorLOSS)
 cm.qda
 ```
-PCA might move this to an earlier point
-```{r PCA}
-PCA <-  prcomp(train.num[,-1], scale. = TRUE)
-PCA
-summary(PCA)
-```
+
 ## random forests classification
 finding the tuning parameter mtry takes the longest from running this code
 it can be skipped to run this much faster
