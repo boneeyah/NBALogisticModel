@@ -248,7 +248,7 @@ df.roc <- rbind(data.frame(x.vals=simple.roc@x.values[[1]], y.vals=simple.roc@y.
                 data.frame(x.vals=lasso.roc@x.values[[1]], y.vals=lasso.roc@y.values[[1]], model="lasso"),
                 data.frame(x.vals=custom.roc@x.values[[1]], y.vals=custom.roc@y.values[[1]], model="custom"))
 df.roc$model <- factor(df.roc$model, levels = c("simple", "bkw", "step", "lasso", "custom"))
-df.roc %>% ggplot(aes(x=x.vals,y=y.vals, color = model))+geom_line(size=.55)+theme_cowplot()+labs(x="False positive rate", y="True positive rate")+scale_color_viridis_d(direction = -1)
+df.roc %>% ggplot(aes(x=x.vals,y=y.vals, color = model))+geom_line(size=.55)+theme_cowplot()+labs(x="False positive rate", y="True positive rate")+scale_color_viridis_d(direction = -1, end = .98)
 ```
 
 All the models, with the exception of the Simple model, perform reasonably well and similar to each other. Forward and Stepwise have the exact same performance, in this case they both selected the same model, which is not uncommon given that Stepwise is a modified version of forward selection (it means that the stepwise selection did not remove any variables once they were added, so it behaved the same as forward selection).
@@ -355,7 +355,7 @@ cm.lasso2
 Create QDA LDA models
 ```{r LDA QDA}
 #quick assumption check of equal covariances by using ellispes plot
-covEllipses(train.num[,2:16], train.num$WINorLOSS, fill = TRUE, pooled = FALSE, variables = 1:15, col = c("#277f8e","#440154"), fill.alpha = .05)
+covEllipses(train.num[,2:16], train.num$WINorLOSS, fill = TRUE, pooled = FALSE, variables = 1:15, col = c("#277f8e","#440154"), fill.alpha = .05, center.cex = 1.5, var.cex = 1)
 lda.mod <- lda(WINorLOSS~., data=train.num, prior = c(.5,.5))
 lda.pred <-  predict(lda.mod, test.num)
 lda.auc <- performance(prediction(lda.pred$posterior[,2],test.num$WINorLOSS),"auc")
@@ -455,11 +455,11 @@ complex.mod.full <- glm(formula = WINorLOSS ~ Team + Home + Opp + PTS + FGA +
 complex.pred.full <- predict(complex.mod.full, complexdata, type = "response")
 complex.auc.full <- performance(prediction(complex.pred.full, complexdata$WINorLOSS),"auc")
 complex.auc.full <- complex.auc.full@y.values[[1]]
-complex.pred.full <- ifelse(complex.pred>.5, "W", "L")
+complex.pred.full <- ifelse(complex.pred.full < .5, "W", "L")
 complex.pred.full <- factor(complex.pred.full, levels = c("W", "L"))
 complexdata$WINorLOSS <- factor(complexdata$WINorLOSS, levels = c("W", "L"))
 
-cm.complex.full <- confusionMatrix(factor(ifelse(complex.mod.full$fitted.values>.5,"W","L"),levels = c("W","L")),complexdata$WINorLOSS)
+cm.complex.full <- confusionMatrix(complex.pred.full, complexdata$WINorLOSS)
 cm.complex.full
 paste("AUC",complex.auc.full)
 ```

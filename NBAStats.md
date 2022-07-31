@@ -999,7 +999,7 @@ df.roc <- rbind(data.frame(x.vals=simple.roc@x.values[[1]], y.vals=simple.roc@y.
                 data.frame(x.vals=lasso.roc@x.values[[1]], y.vals=lasso.roc@y.values[[1]], model="lasso"),
                 data.frame(x.vals=custom.roc@x.values[[1]], y.vals=custom.roc@y.values[[1]], model="custom"))
 df.roc$model <- factor(df.roc$model, levels = c("simple", "bkw", "step", "lasso", "custom"))
-df.roc %>% ggplot(aes(x=x.vals,y=y.vals, color = model))+geom_line(size=.55)+theme_cowplot()+labs(x="False positive rate", y="True positive rate")+scale_color_viridis_d(direction = -1)
+df.roc %>% ggplot(aes(x=x.vals,y=y.vals, color = model))+geom_line(size=.55)+theme_cowplot()+labs(x="False positive rate", y="True positive rate")+scale_color_viridis_d(direction = -1, end = .98)
 ```
 
 ![](NBAStats_files/figure-markdown_github/roc%20plot-1.png)
@@ -2168,7 +2168,7 @@ Create QDA LDA models
 
 ``` r
 #quick assumption check of equal covariances by using ellispes plot
-covEllipses(train.num[,2:16], train.num$WINorLOSS, fill = TRUE, pooled = FALSE, variables = 1:15, col = c("#277f8e","#440154"), fill.alpha = .05)
+covEllipses(train.num[,2:16], train.num$WINorLOSS, fill = TRUE, pooled = FALSE, variables = 1:15, col = c("#277f8e","#440154"), fill.alpha = .05, center.cex = 1.5, var.cex = 1)
 ```
 
 ![](NBAStats_files/figure-markdown_github/LDA%20QDA-1.png)
@@ -2596,16 +2596,11 @@ complex.mod.full <- glm(formula = WINorLOSS ~ Team + Home + Opp + PTS + FGA +
 complex.pred.full <- predict(complex.mod.full, complexdata, type = "response")
 complex.auc.full <- performance(prediction(complex.pred.full, complexdata$WINorLOSS),"auc")
 complex.auc.full <- complex.auc.full@y.values[[1]]
-complex.pred.full <- ifelse(complex.pred>.5, "W", "L")
-```
-
-    ## Warning in Ops.factor(complex.pred, 0.5): '>' not meaningful for factors
-
-``` r
+complex.pred.full <- ifelse(complex.pred.full < .5, "W", "L")
 complex.pred.full <- factor(complex.pred.full, levels = c("W", "L"))
 complexdata$WINorLOSS <- factor(complexdata$WINorLOSS, levels = c("W", "L"))
 
-cm.complex.full <- confusionMatrix(factor(ifelse(complex.mod.full$fitted.values>.5,"W","L"),levels = c("W","L")),complexdata$WINorLOSS)
+cm.complex.full <- confusionMatrix(complex.pred.full, complexdata$WINorLOSS)
 cm.complex.full
 ```
 
@@ -2613,26 +2608,26 @@ cm.complex.full
     ## 
     ##           Reference
     ## Prediction    W    L
-    ##          W 4226  672
-    ##          L  694 4248
+    ##          W  694 4248
+    ##          L 4226  672
     ##                                          
-    ##                Accuracy : 0.8612         
-    ##                  95% CI : (0.8542, 0.868)
+    ##                Accuracy : 0.1388         
+    ##                  95% CI : (0.132, 0.1458)
     ##     No Information Rate : 0.5            
-    ##     P-Value [Acc > NIR] : <2e-16         
+    ##     P-Value [Acc > NIR] : 1.0000         
     ##                                          
-    ##                   Kappa : 0.7224         
+    ##                   Kappa : -0.7224        
     ##                                          
-    ##  Mcnemar's Test P-Value : 0.5699         
+    ##  Mcnemar's Test P-Value : 0.8195         
     ##                                          
-    ##             Sensitivity : 0.8589         
-    ##             Specificity : 0.8634         
-    ##          Pos Pred Value : 0.8628         
-    ##          Neg Pred Value : 0.8596         
-    ##              Prevalence : 0.5000         
-    ##          Detection Rate : 0.4295         
-    ##    Detection Prevalence : 0.4978         
-    ##       Balanced Accuracy : 0.8612         
+    ##             Sensitivity : 0.14106        
+    ##             Specificity : 0.13659        
+    ##          Pos Pred Value : 0.14043        
+    ##          Neg Pred Value : 0.13720        
+    ##              Prevalence : 0.50000        
+    ##          Detection Rate : 0.07053        
+    ##    Detection Prevalence : 0.50224        
+    ##       Balanced Accuracy : 0.13882        
     ##                                          
     ##        'Positive' Class : W              
     ## 
@@ -2697,13 +2692,13 @@ Custom
 Complex
 </td>
 <td style="text-align:right;width: 0.5in; ">
-0.8611789
+0.1388211
 </td>
 <td style="text-align:right;">
-0.8589431
+0.1410569
 </td>
 <td style="text-align:right;">
-0.8634146
+0.1365854
 </td>
 <td style="text-align:right;">
 0.9414364
