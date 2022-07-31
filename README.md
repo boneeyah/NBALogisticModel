@@ -12,6 +12,7 @@ Miguel Bonilla | Milan Patel | Jordan Eaddy
 * [Data Files](https://github.com/boneeyah/GroupProject2/tree/main/DataFile)
 * [Markdown File](https://github.com/boneeyah/GroupProject2/blob/main/NBAStats.md)
 * [Code](https://github.com/boneeyah/GroupProject2/blob/main/NBAStats.Rmd)
+* [Figures](https://github.com/boneeyah/GroupProject2/tree/main/NBAStats_files/figure-markdown_github)
 
 ## Technology
 Project was created using:
