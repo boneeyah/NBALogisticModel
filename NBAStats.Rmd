@@ -265,7 +265,9 @@ custom.pred.full2 <- factor(custom.pred.full2, levels = c("W","L"))
 
 cm.custom.full <- confusionMatrix(custom.pred.full2, factor(cleandata$WINorLOSS, levels = c("W","L")))
 cm.custom.full
-
+custom.auc.full <- performance(prediction(custom.pred.full, cleandata$WINorLOSS), "auc")
+custom.auc.full <- custom.auc.full@y.values[[1]]
+paste("AUC",custom.auc.full)
 ```
 Calculate leverage and influence plots to check assumptions are met
 ```{r assumptions}
@@ -460,5 +462,16 @@ complexdata$WINorLOSS <- factor(complexdata$WINorLOSS, levels = c("W", "L"))
 cm.complex.full <- confusionMatrix(factor(ifelse(complex.mod.full$fitted.values>.5,"W","L"),levels = c("W","L")),complexdata$WINorLOSS)
 cm.complex.full
 paste("AUC",complex.auc.full)
+```
+
+```{r final comparison}
+df.compare <- data.frame("Model"=c("Custom", "Complex"),
+           "Accuracy"=c(cm.custom.full$overall[1],cm.complex.full$overall[1]),
+           "Sensitivity"=c(cm.custom.full$byClass[1], cm.complex.full$byClass[1]),
+           "Specificity"=c(cm.custom.full$byClass[2], cm.complex.full$byClass[2]),
+           "AUC" = c(custom.auc.full, complex.auc.full))
+df.compare %>% kable(format = "html") %>% kable_styling(latex_options = c("striped", "scale_down"), full_width = FALSE) %>% 
+  row_spec(row = 0, italic = T, background = "#21918c", color = "white") %>% 
+  column_spec(1:2, width = "0.5in")
 ```
 

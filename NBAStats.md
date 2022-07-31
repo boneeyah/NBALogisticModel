@@ -1095,6 +1095,14 @@ cm.custom.full
     ##        'Positive' Class : W               
     ## 
 
+``` r
+custom.auc.full <- performance(prediction(custom.pred.full, cleandata$WINorLOSS), "auc")
+custom.auc.full <- custom.auc.full@y.values[[1]]
+paste("AUC",custom.auc.full)
+```
+
+    ## [1] "AUC 0.92758658867076"
+
 Calculate leverage and influence plots to check assumptions are met
 
 ``` r
@@ -2634,3 +2642,72 @@ paste("AUC",complex.auc.full)
 ```
 
     ## [1] "AUC 0.941436355674541"
+
+``` r
+df.compare <- data.frame("Model"=c("Custom", "Complex"),
+           "Accuracy"=c(cm.custom.full$overall[1],cm.complex.full$overall[1]),
+           "Sensitivity"=c(cm.custom.full$byClass[1], cm.complex.full$byClass[1]),
+           "Specificity"=c(cm.custom.full$byClass[2], cm.complex.full$byClass[2]),
+           "AUC" = c(custom.auc.full, complex.auc.full))
+df.compare %>% kable(format = "html") %>% kable_styling(latex_options = c("striped", "scale_down"), full_width = FALSE) %>% 
+  row_spec(row = 0, italic = T, background = "#21918c", color = "white") %>% 
+  column_spec(1:2, width = "0.5in")
+```
+
+<table class="table" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
+Model
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+Accuracy
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+Sensitivity
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+Specificity
+</th>
+<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
+AUC
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;width: 0.5in; ">
+Custom
+</td>
+<td style="text-align:right;width: 0.5in; ">
+0.8461382
+</td>
+<td style="text-align:right;">
+0.8432927
+</td>
+<td style="text-align:right;">
+0.8489837
+</td>
+<td style="text-align:right;">
+0.9275866
+</td>
+</tr>
+<tr>
+<td style="text-align:left;width: 0.5in; ">
+Complex
+</td>
+<td style="text-align:right;width: 0.5in; ">
+0.8611789
+</td>
+<td style="text-align:right;">
+0.8589431
+</td>
+<td style="text-align:right;">
+0.8634146
+</td>
+<td style="text-align:right;">
+0.9414364
+</td>
+</tr>
+</tbody>
+</table>
