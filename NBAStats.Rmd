@@ -276,7 +276,7 @@ blr_plot_pearson_residual(custom.mod.full) #pearson residuals for each observati
 plot(custom.mod.full, col = "blue") # plot 4 high leverage cook's D values
 
 # correlation for colinearity
-custom.mod.corr <- round(cor(numdata[,2:16]),2)
+custom.mod.corr <- round(cor(numdata[,c(3,4,6,7,8,11:16)]),2)
 custom.mod.corr %>% kable(format = "html") %>% kable_styling(latex_options = c("striped", "scale_down"), full_width = FALSE) %>% 
   row_spec(row = 0, italic = T, background = "#21918c", color = "white") %>% 
   column_spec(column = 1, italic = T, background = "#21918c", color ="white") #correlation matrix, difficult to see
@@ -284,8 +284,8 @@ custom.mod.corr <- melt(custom.mod.corr)
 custom.mod.corr %>% ggplot(aes(x=Var1, y = Var2, fill = value))+geom_tile()+scale_fill_viridis_c()+theme_cowplot()+theme(axis.title.x = element_blank(),axis.title.y = element_blank(), axis.text = element_text(size = 10))
 
 #linearity check
-cleandata %>% mutate("Log Odds" = custom.mod.full$linear.predictors) %>% dplyr::select(c(21,4,6,7,9,10,12,13,15:21)) %>% 
-  pivot_longer(cols = 2:14, names_to = "statistic") %>% ggplot(aes(x=value,y=`Log Odds`))+geom_smooth(fill = "#440154", alpha = .3, method = "loess", size = 1, span = 1.25)+facet_wrap(vars(statistic), scales = "free")+theme_cowplot()+theme(axis.text = element_blank())
+cleandata %>% mutate("Log Odds" = custom.mod.full$linear.predictors) %>% dplyr::select(c(21,4,6,9,10,12,15:20)) %>% 
+  pivot_longer(cols = 2:12, names_to = "statistic") %>% ggplot(aes(x=value,y=`Log Odds`))+geom_smooth(fill = "#440154", alpha = .3, method = "loess", size = 1, span = 1.25)+facet_wrap(vars(statistic), scales = "free")+theme_cowplot()+theme(axis.text = element_blank())
 ```
 
 create table with interpretable values on odds ratio scale
@@ -312,8 +312,8 @@ train.complex <- complexdata[index,]
 test.complex <- complexdata[-index,]
 
 complex.mod <- glm(formula = WINorLOSS ~ Team + Home + Opp + PTS + FGA + 
-                     `FG%` + `3P%` + `3PA` + FTA + `FT%` + TRB + AST + 
-                     STL + BLK + TOV + PF, family = "binomial", data = train.complex)
+                     `3P%` + `3PA` + FTA + `FT%` + TRB + AST + 
+                     STL + BLK + TOV + PF + TOV:Opp, family = "binomial", data = train.complex)
 complex.pred <- predict(complex.mod, test.complex, type = "response")
 complex.auc <- performance(prediction(complex.pred, test.complex$WINorLOSS),"auc")
 complex.auc <- complex.auc@y.values[[1]]
@@ -445,5 +445,20 @@ plot(rf.roc, lwd = 1, add = TRUE, col = "#414487")
 plot(complex.roc, col = "#440154", lwd = 1, add = TRUE)
 legend(x = .75, y = .50, legend = c("simple", "backwards", "stepwise", "lasso", "custom","complex"), col = c("#fde725", "#3b528b", "#21918c", "#7ad151", "#414487", "440154"), lty =1)
 
+```
+```{r complex over full data}
+complex.mod.full <- glm(formula = WINorLOSS ~ Team + Home + Opp + PTS + FGA + 
+                     `3P%` + `3PA` + FTA + `FT%` + TRB + AST + 
+                     STL + BLK + TOV + PF + TOV:Opp, family = "binomial", data = complexdata)
+complex.pred.full <- predict(complex.mod.full, complexdata, type = "response")
+complex.auc.full <- performance(prediction(complex.pred.full, complexdata$WINorLOSS),"auc")
+complex.auc.full <- complex.auc.full@y.values[[1]]
+complex.pred.full <- ifelse(complex.pred>.5, "W", "L")
+complex.pred.full <- factor(complex.pred.full, levels = c("W", "L"))
+complexdata$WINorLOSS <- factor(complexdata$WINorLOSS, levels = c("W", "L"))
+
+cm.complex.full <- confusionMatrix(factor(ifelse(complex.mod.full$fitted.values>.5,"W","L"),levels = c("W","L")),complexdata$WINorLOSS)
+cm.complex.full
+paste("AUC",complex.auc.full)
 ```
 

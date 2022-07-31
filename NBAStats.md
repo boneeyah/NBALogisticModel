@@ -1124,7 +1124,7 @@ plot(custom.mod.full, col = "blue") # plot 4 high leverage cook's D values
 
 ``` r
 # correlation for colinearity
-custom.mod.corr <- round(cor(numdata[,2:16]),2)
+custom.mod.corr <- round(cor(numdata[,c(3,4,6,7,8,11:16)]),2)
 custom.mod.corr %>% kable(format = "html") %>% kable_styling(latex_options = c("striped", "scale_down"), full_width = FALSE) %>% 
   row_spec(row = 0, italic = T, background = "#21918c", color = "white") %>% 
   column_spec(column = 1, italic = T, background = "#21918c", color ="white") #correlation matrix, difficult to see
@@ -1136,16 +1136,10 @@ custom.mod.corr %>% kable(format = "html") %>% kable_styling(latex_options = c("
 <th style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
 </th>
 <th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
-Game
-</th>
-<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
 PTS
 </th>
 <th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
 FGA
-</th>
-<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
-FG%
 </th>
 <th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
 3PA
@@ -1155,12 +1149,6 @@ FG%
 </th>
 <th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
 FTA
-</th>
-<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
-FT%
-</th>
-<th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
-ORB
 </th>
 <th style="text-align:right;font-style: italic;color: white !important;background-color: #21918c !important;">
 TRB
@@ -1185,69 +1173,13 @@ PF
 <tbody>
 <tr>
 <td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
-Game
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.06
-</td>
-<td style="text-align:right;">
-0.06
-</td>
-<td style="text-align:right;">
-0.04
-</td>
-<td style="text-align:right;">
-0.05
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
--0.04
-</td>
-<td style="text-align:right;">
-0.00
-</td>
-<td style="text-align:right;">
-0.00
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
-0.08
-</td>
-<td style="text-align:right;">
--0.01
-</td>
-<td style="text-align:right;">
--0.02
-</td>
-<td style="text-align:right;">
--0.08
-</td>
-<td style="text-align:right;">
--0.09
-</td>
-</tr>
-<tr>
-<td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
 PTS
-</td>
-<td style="text-align:right;">
-0.06
 </td>
 <td style="text-align:right;">
 1.00
 </td>
 <td style="text-align:right;">
 0.28
-</td>
-<td style="text-align:right;">
-0.71
 </td>
 <td style="text-align:right;">
 0.27
@@ -1257,12 +1189,6 @@ PTS
 </td>
 <td style="text-align:right;">
 0.27
-</td>
-<td style="text-align:right;">
-0.18
-</td>
-<td style="text-align:right;">
--0.01
 </td>
 <td style="text-align:right;">
 0.09
@@ -1288,16 +1214,10 @@ PTS
 FGA
 </td>
 <td style="text-align:right;">
-0.06
-</td>
-<td style="text-align:right;">
 0.28
 </td>
 <td style="text-align:right;">
 1.00
-</td>
-<td style="text-align:right;">
--0.22
 </td>
 <td style="text-align:right;">
 0.26
@@ -1307,12 +1227,6 @@ FGA
 </td>
 <td style="text-align:right;">
 -0.22
-</td>
-<td style="text-align:right;">
--0.04
-</td>
-<td style="text-align:right;">
-0.51
 </td>
 <td style="text-align:right;">
 0.42
@@ -1335,69 +1249,13 @@ FGA
 </tr>
 <tr>
 <td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
-FG%
-</td>
-<td style="text-align:right;">
-0.04
-</td>
-<td style="text-align:right;">
-0.71
-</td>
-<td style="text-align:right;">
--0.22
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
--0.07
-</td>
-<td style="text-align:right;">
-0.49
-</td>
-<td style="text-align:right;">
--0.05
-</td>
-<td style="text-align:right;">
-0.03
-</td>
-<td style="text-align:right;">
--0.35
-</td>
-<td style="text-align:right;">
--0.21
-</td>
-<td style="text-align:right;">
-0.55
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
-0.04
-</td>
-<td style="text-align:right;">
-0.03
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-</tr>
-<tr>
-<td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
 3PA
-</td>
-<td style="text-align:right;">
-0.05
 </td>
 <td style="text-align:right;">
 0.27
 </td>
 <td style="text-align:right;">
 0.26
-</td>
-<td style="text-align:right;">
--0.07
 </td>
 <td style="text-align:right;">
 1.00
@@ -1407,12 +1265,6 @@ FG%
 </td>
 <td style="text-align:right;">
 -0.10
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.02
 </td>
 <td style="text-align:right;">
 0.09
@@ -1438,16 +1290,10 @@ FG%
 3P%
 </td>
 <td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
 0.48
 </td>
 <td style="text-align:right;">
 -0.14
-</td>
-<td style="text-align:right;">
-0.49
 </td>
 <td style="text-align:right;">
 0.07
@@ -1457,12 +1303,6 @@ FG%
 </td>
 <td style="text-align:right;">
 -0.07
-</td>
-<td style="text-align:right;">
-0.03
-</td>
-<td style="text-align:right;">
--0.20
 </td>
 <td style="text-align:right;">
 -0.12
@@ -1488,16 +1328,10 @@ FG%
 FTA
 </td>
 <td style="text-align:right;">
--0.04
-</td>
-<td style="text-align:right;">
 0.27
 </td>
 <td style="text-align:right;">
 -0.22
-</td>
-<td style="text-align:right;">
--0.05
 </td>
 <td style="text-align:right;">
 -0.10
@@ -1507,12 +1341,6 @@ FTA
 </td>
 <td style="text-align:right;">
 1.00
-</td>
-<td style="text-align:right;">
--0.03
-</td>
-<td style="text-align:right;">
-0.09
 </td>
 <td style="text-align:right;">
 0.09
@@ -1535,110 +1363,7 @@ FTA
 </tr>
 <tr>
 <td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
-FT%
-</td>
-<td style="text-align:right;">
-0.00
-</td>
-<td style="text-align:right;">
-0.18
-</td>
-<td style="text-align:right;">
--0.04
-</td>
-<td style="text-align:right;">
-0.03
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.03
-</td>
-<td style="text-align:right;">
--0.03
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
--0.09
-</td>
-<td style="text-align:right;">
--0.05
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
--0.02
-</td>
-<td style="text-align:right;">
-0.00
-</td>
-<td style="text-align:right;">
--0.01
-</td>
-<td style="text-align:right;">
-0.00
-</td>
-</tr>
-<tr>
-<td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
-ORB
-</td>
-<td style="text-align:right;">
-0.00
-</td>
-<td style="text-align:right;">
--0.01
-</td>
-<td style="text-align:right;">
-0.51
-</td>
-<td style="text-align:right;">
--0.35
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
--0.20
-</td>
-<td style="text-align:right;">
-0.09
-</td>
-<td style="text-align:right;">
--0.09
-</td>
-<td style="text-align:right;">
-1.00
-</td>
-<td style="text-align:right;">
-0.56
-</td>
-<td style="text-align:right;">
--0.12
-</td>
-<td style="text-align:right;">
-0.04
-</td>
-<td style="text-align:right;">
-0.01
-</td>
-<td style="text-align:right;">
-0.04
-</td>
-<td style="text-align:right;">
-0.05
-</td>
-</tr>
-<tr>
-<td style="text-align:left;font-style: italic;color: white !important;background-color: #21918c !important;">
 TRB
-</td>
-<td style="text-align:right;">
-0.02
 </td>
 <td style="text-align:right;">
 0.09
@@ -1647,9 +1372,6 @@ TRB
 0.42
 </td>
 <td style="text-align:right;">
--0.21
-</td>
-<td style="text-align:right;">
 0.09
 </td>
 <td style="text-align:right;">
@@ -1657,12 +1379,6 @@ TRB
 </td>
 <td style="text-align:right;">
 0.09
-</td>
-<td style="text-align:right;">
--0.05
-</td>
-<td style="text-align:right;">
-0.56
 </td>
 <td style="text-align:right;">
 1.00
@@ -1688,16 +1404,10 @@ TRB
 AST
 </td>
 <td style="text-align:right;">
-0.08
-</td>
-<td style="text-align:right;">
 0.57
 </td>
 <td style="text-align:right;">
 0.20
-</td>
-<td style="text-align:right;">
-0.55
 </td>
 <td style="text-align:right;">
 0.23
@@ -1707,12 +1417,6 @@ AST
 </td>
 <td style="text-align:right;">
 -0.17
-</td>
-<td style="text-align:right;">
-0.02
-</td>
-<td style="text-align:right;">
--0.12
 </td>
 <td style="text-align:right;">
 0.01
@@ -1738,16 +1442,10 @@ AST
 STL
 </td>
 <td style="text-align:right;">
--0.01
-</td>
-<td style="text-align:right;">
 0.10
 </td>
 <td style="text-align:right;">
 0.12
-</td>
-<td style="text-align:right;">
-0.02
 </td>
 <td style="text-align:right;">
 0.05
@@ -1757,12 +1455,6 @@ STL
 </td>
 <td style="text-align:right;">
 0.05
-</td>
-<td style="text-align:right;">
--0.02
-</td>
-<td style="text-align:right;">
-0.04
 </td>
 <td style="text-align:right;">
 -0.11
@@ -1788,13 +1480,7 @@ STL
 BLK
 </td>
 <td style="text-align:right;">
--0.02
-</td>
-<td style="text-align:right;">
 0.06
-</td>
-<td style="text-align:right;">
-0.04
 </td>
 <td style="text-align:right;">
 0.04
@@ -1807,12 +1493,6 @@ BLK
 </td>
 <td style="text-align:right;">
 0.02
-</td>
-<td style="text-align:right;">
-0.00
-</td>
-<td style="text-align:right;">
-0.01
 </td>
 <td style="text-align:right;">
 0.17
@@ -1838,16 +1518,10 @@ BLK
 TOV
 </td>
 <td style="text-align:right;">
--0.08
-</td>
-<td style="text-align:right;">
 -0.12
 </td>
 <td style="text-align:right;">
 -0.28
-</td>
-<td style="text-align:right;">
-0.03
 </td>
 <td style="text-align:right;">
 -0.01
@@ -1857,12 +1531,6 @@ TOV
 </td>
 <td style="text-align:right;">
 0.03
-</td>
-<td style="text-align:right;">
--0.01
-</td>
-<td style="text-align:right;">
-0.04
 </td>
 <td style="text-align:right;">
 0.13
@@ -1888,16 +1556,10 @@ TOV
 PF
 </td>
 <td style="text-align:right;">
--0.09
-</td>
-<td style="text-align:right;">
 0.15
 </td>
 <td style="text-align:right;">
 0.07
-</td>
-<td style="text-align:right;">
-0.01
 </td>
 <td style="text-align:right;">
 0.05
@@ -1907,12 +1569,6 @@ PF
 </td>
 <td style="text-align:right;">
 0.21
-</td>
-<td style="text-align:right;">
-0.00
-</td>
-<td style="text-align:right;">
-0.05
 </td>
 <td style="text-align:right;">
 0.01
@@ -1945,8 +1601,8 @@ custom.mod.corr %>% ggplot(aes(x=Var1, y = Var2, fill = value))+geom_tile()+scal
 
 ``` r
 #linearity check
-cleandata %>% mutate("Log Odds" = custom.mod.full$linear.predictors) %>% dplyr::select(c(21,4,6,7,9,10,12,13,15:21)) %>% 
-  pivot_longer(cols = 2:14, names_to = "statistic") %>% ggplot(aes(x=value,y=`Log Odds`))+geom_smooth(fill = "#440154", alpha = .3, method = "loess", size = 1, span = 1.25)+facet_wrap(vars(statistic), scales = "free")+theme_cowplot()+theme(axis.text = element_blank())
+cleandata %>% mutate("Log Odds" = custom.mod.full$linear.predictors) %>% dplyr::select(c(21,4,6,9,10,12,15:20)) %>% 
+  pivot_longer(cols = 2:12, names_to = "statistic") %>% ggplot(aes(x=value,y=`Log Odds`))+geom_smooth(fill = "#440154", alpha = .3, method = "loess", size = 1, span = 1.25)+facet_wrap(vars(statistic), scales = "free")+theme_cowplot()+theme(axis.text = element_blank())
 ```
 
     ## `geom_smooth()` using formula 'y ~ x'
@@ -2223,8 +1879,8 @@ train.complex <- complexdata[index,]
 test.complex <- complexdata[-index,]
 
 complex.mod <- glm(formula = WINorLOSS ~ Team + Home + Opp + PTS + FGA + 
-                     `FG%` + `3P%` + `3PA` + FTA + `FT%` + TRB + AST + 
-                     STL + BLK + TOV + PF, family = "binomial", data = train.complex)
+                     `3P%` + `3PA` + FTA + `FT%` + TRB + AST + 
+                     STL + BLK + TOV + PF + TOV:Opp, family = "binomial", data = train.complex)
 complex.pred <- predict(complex.mod, test.complex, type = "response")
 complex.auc <- performance(prediction(complex.pred, test.complex$WINorLOSS),"auc")
 complex.auc <- complex.auc@y.values[[1]]
@@ -2240,26 +1896,26 @@ cm.complex
     ## 
     ##           Reference
     ## Prediction   W   L
-    ##          W 875 142
-    ##          L 141 810
+    ##          W 877 141
+    ##          L 139 811
     ##                                           
-    ##                Accuracy : 0.8562          
-    ##                  95% CI : (0.8399, 0.8714)
+    ##                Accuracy : 0.8577          
+    ##                  95% CI : (0.8415, 0.8729)
     ##     No Information Rate : 0.5163          
     ##     P-Value [Acc > NIR] : <2e-16          
     ##                                           
-    ##                   Kappa : 0.7121          
+    ##                   Kappa : 0.7151          
     ##                                           
-    ##  Mcnemar's Test P-Value : 1               
+    ##  Mcnemar's Test P-Value : 0.9523          
     ##                                           
-    ##             Sensitivity : 0.8612          
-    ##             Specificity : 0.8508          
-    ##          Pos Pred Value : 0.8604          
-    ##          Neg Pred Value : 0.8517          
+    ##             Sensitivity : 0.8632          
+    ##             Specificity : 0.8519          
+    ##          Pos Pred Value : 0.8615          
+    ##          Neg Pred Value : 0.8537          
     ##              Prevalence : 0.5163          
-    ##          Detection Rate : 0.4446          
-    ##    Detection Prevalence : 0.5168          
-    ##       Balanced Accuracy : 0.8560          
+    ##          Detection Rate : 0.4456          
+    ##    Detection Prevalence : 0.5173          
+    ##       Balanced Accuracy : 0.8575          
     ##                                           
     ##        'Positive' Class : W               
     ## 
@@ -2801,16 +2457,16 @@ LASSO
 Complex
 </td>
 <td style="text-align:right;width: 0.5in; ">
-0.8561992
+0.8577236
 </td>
 <td style="text-align:right;">
-0.8612205
+0.8631890
 </td>
 <td style="text-align:right;">
-0.8508403
+0.8518908
 </td>
 <td style="text-align:right;">
-0.9324940
+0.9332125
 </td>
 </tr>
 <tr>
@@ -2924,3 +2580,57 @@ legend(x = .75, y = .50, legend = c("simple", "backwards", "stepwise", "lasso", 
 ```
 
 ![](NBAStats_files/figure-markdown_github/new%20roc%20plot-2.png)
+
+``` r
+complex.mod.full <- glm(formula = WINorLOSS ~ Team + Home + Opp + PTS + FGA + 
+                     `3P%` + `3PA` + FTA + `FT%` + TRB + AST + 
+                     STL + BLK + TOV + PF + TOV:Opp, family = "binomial", data = complexdata)
+complex.pred.full <- predict(complex.mod.full, complexdata, type = "response")
+complex.auc.full <- performance(prediction(complex.pred.full, complexdata$WINorLOSS),"auc")
+complex.auc.full <- complex.auc.full@y.values[[1]]
+complex.pred.full <- ifelse(complex.pred>.5, "W", "L")
+```
+
+    ## Warning in Ops.factor(complex.pred, 0.5): '>' not meaningful for factors
+
+``` r
+complex.pred.full <- factor(complex.pred.full, levels = c("W", "L"))
+complexdata$WINorLOSS <- factor(complexdata$WINorLOSS, levels = c("W", "L"))
+
+cm.complex.full <- confusionMatrix(factor(ifelse(complex.mod.full$fitted.values>.5,"W","L"),levels = c("W","L")),complexdata$WINorLOSS)
+cm.complex.full
+```
+
+    ## Confusion Matrix and Statistics
+    ## 
+    ##           Reference
+    ## Prediction    W    L
+    ##          W 4226  672
+    ##          L  694 4248
+    ##                                          
+    ##                Accuracy : 0.8612         
+    ##                  95% CI : (0.8542, 0.868)
+    ##     No Information Rate : 0.5            
+    ##     P-Value [Acc > NIR] : <2e-16         
+    ##                                          
+    ##                   Kappa : 0.7224         
+    ##                                          
+    ##  Mcnemar's Test P-Value : 0.5699         
+    ##                                          
+    ##             Sensitivity : 0.8589         
+    ##             Specificity : 0.8634         
+    ##          Pos Pred Value : 0.8628         
+    ##          Neg Pred Value : 0.8596         
+    ##              Prevalence : 0.5000         
+    ##          Detection Rate : 0.4295         
+    ##    Detection Prevalence : 0.4978         
+    ##       Balanced Accuracy : 0.8612         
+    ##                                          
+    ##        'Positive' Class : W              
+    ## 
+
+``` r
+paste("AUC",complex.auc.full)
+```
+
+    ## [1] "AUC 0.941436355674541"
