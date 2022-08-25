@@ -9,10 +9,10 @@ The aim of this project was to create a binary classifier for predicting win or 
 [Miguel Bonilla](https://github.com/boneeyah) 
 
 ## Contents
-* [Data Files](https://github.com/boneeyah/GroupProject2/tree/main/DataFile)
-* [Markdown File](https://github.com/boneeyah/GroupProject2/blob/main/NBAStats.md)
-* [Code](https://github.com/boneeyah/GroupProject2/blob/main/NBAStats.Rmd)
-* [Figures](https://github.com/boneeyah/GroupProject2/tree/main/NBAStats_files/figure-markdown_github)
+* [Data Files](https://github.com/boneeyah/NBALogisticModel/tree/main/DataFile)
+* [Markdown File](https://github.com/boneeyah/NBALogisticModel/blob/main/NBAStats.md)
+* [Code](https://github.com/boneeyah/NBALogisticModel/blob/main/NBAStats.Rmd)
+* [Figures](https://github.com/boneeyah/NBALogisticModel/tree/main/NBAStats_files/figure-markdown_github)
 
 ## Technology
 Project was created using:
