@@ -5,8 +5,8 @@ Dataset is comprised of team statistics for every single matchup from the 2014-2
 
 The aim of this project was to create a binary classifier for predicting win or loss for a match based on a team's performance.
 
-## Team Members ![Github](https://img.shields.io/badge/Contributors-3-brightgreen)
-Miguel Bonilla | Milan Patel | Jordan Eaddy
+## Author:
+[Miguel Bonilla](https://github.com/boneeyah) 
 
 ## Contents
 * [Data Files](https://github.com/boneeyah/GroupProject2/tree/main/DataFile)
